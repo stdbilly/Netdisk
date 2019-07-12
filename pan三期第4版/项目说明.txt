@@ -1,0 +1,12 @@
+
+说明：在线程池基础上实现，服务器端父进程监控，子进程/主线程分配任务，子线程执行，并添加了退出机制
+         一期全部实现，另根据三期虚拟文件系统的实际情况，添加了服务器创建目录的功能
+         二期实现了密码加密验证，以及本地日志，各用户相互看不到各自的文件（查询条件限制）
+         三期全部实现，实现了系统登陆/注册/修改/退出，以及一期的功能全部结合数据库实现
+         所有用户的根目录均为pan下的data，实现了根据服务器程序所在绝对路径的不同给出相应的网盘根目录
+         在conf目录下有服务端启动信息，及数据库操作连接信息的配置文件
+                 
+
+通过以下语句创建文件系统需要的数据库表
+create table Data(dataid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(dataid),belong varchar(15),procode int default 0,code int,name varchar(15),type char(1),md5value varchar(32));
+create table User(id int NOT NULL AUTO_INCREMENT,PRIMARY KEY(id),user varchar(21),salt varchar(9),ciphertext varchar(50));

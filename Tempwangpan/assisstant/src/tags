@@ -1,0 +1,67 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CC	Makefile	/^CC:=gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS:=-Wall -lpthread -lrt -I \/usr\/include\/mysql\/  -I ..\/include\/ -lmysqlclient -lcrypt$/;"	m
+CdCommand	commend.c	/^int CdCommand(int fd, MYSQL* conn, linkMsg_t* plmsg, UserState_t* pUState)$/;"	f
+Compute_file_md5	main_md5.c	/^int Compute_file_md5(const char *file_path, char *md5_str)$/;"	f
+Compute_string_md5	main_md5.c	/^int Compute_string_md5(unsigned char *dest_str, unsigned int dest_len, char *md5_str)$/;"	f
+ELF	Makefile	/^ELF:=server$/;"	m
+GenerateStr	commend.c	/^static void GenerateStr(char *str)$/;"	f	file:
+InsertFileInfo	transmission.c	/^int InsertFileInfo(MYSQL* conn, UserState_t *pUState, char* fileType, char* fileName, char* md5Str, size_t fileSize)$/;"	f
+LsCommand	commend.c	/^int LsCommand(int fd, MYSQL* conn, UserState_t* pUState)$/;"	f
+MD5Decode	md5.c	/^void MD5Decode(unsigned int *output, unsigned char *input, unsigned int len)$/;"	f
+MD5Encode	md5.c	/^void MD5Encode(unsigned char *output,unsigned int *input,unsigned int len)$/;"	f
+MD5Final	md5.c	/^void MD5Final(MD5_CTX *context, unsigned char digest[16])$/;"	f
+MD5Init	md5.c	/^void MD5Init(MD5_CTX *context)$/;"	f
+MD5Transform	md5.c	/^void MD5Transform(unsigned int state[4], unsigned char block[64])$/;"	f
+MD5Update	md5.c	/^void MD5Update(MD5_CTX *context, unsigned char *input, unsigned int inputlen)$/;"	f
+MD5_SIZE	main_md5.c	12;"	d	file:
+MD5_STR_LEN	main_md5.c	13;"	d	file:
+OBJS	Makefile	/^OBJS:=$(patsubst %.c,%.o,$(SRCS))$/;"	m
+PADDING	md5.c	/^unsigned char PADDING[] =$/;"	v
+PwdCommand	commend.c	/^int PwdCommand(int fd, MYSQL* conn, UserState_t* pUState)$/;"	f
+READ_DATA_SIZE	main_md5.c	11;"	d	file:
+RmCommand	commend.c	/^int RmCommand(int fd, MYSQL* conn, linkMsg_t* plmsg)$/;"	f
+SRCS	Makefile	/^SRCS:=$(wildcard *.c)$/;"	m
+STR_LEN	commend.c	2;"	d	file:
+apartUserInformation	commend.c	/^static int apartUserInformation(char* buf, User_t* pUser)$/;"	f	file:
+checkMd5InMySQL	transmission.c	/^int checkMd5InMySQL(MYSQL *conn, const char* md5Str)$/;"	f
+checkToken	func_mysql.c	/^int checkToken(MYSQL* conn, char* token,int outTime)$/;"	f
+connectMYSQL	func_mysql.c	/^int connectMYSQL(MYSQL** pConn){$/;"	f
+deleteMySQL	func_mysql.c	/^int deleteMySQL(MYSQL *conn, char* deleteInfo, char* resultInfo){$/;"	f
+epollAdd	main.c	/^int epollAdd(int epfd, int fd){$/;"	f
+exitFds	main.c	/^int exitFds[2];$/;"	v
+exitHandler	main.c	/^void exitHandler(int signum){$/;"	f
+factoryDestroy	factory.c	/^void factoryDestroy(pFactory_t pf){$/;"	f
+factoryInit	factory.c	/^int factoryInit(pFactory_t pf,int threadNum,int capacity){$/;"	f
+factoryStart	factory.c	/^int factoryStart(pFactory_t pf){$/;"	f
+findFatherDirId	commend.c	/^int findFatherDirId(MYSQL* conn, char* childDirID, pDirState_t fatherDir)$/;"	f
+getDirNameFromDirId	commend.c	/^void getDirNameFromDirId(MYSQL *conn, char* DirID, char* DirName)$/;"	f
+getFileInfo	func_mysql.c	/^int getFileInfo(MYSQL* conn, char* fileName, char* currentDirId,char* result)$/;"	f
+getUserNameAndCurDir	func_mysql.c	/^int getUserNameAndCurDir(MYSQL* conn, char* token, char* userName, char* currentDirId)$/;"	f
+insertMySQL	func_mysql.c	/^int insertMySQL(MYSQL* conn, char* insertInfo, char* resultInfo){$/;"	f
+main	main.c	/^int main(int argc, char* argv[])$/;"	f
+queDestroy	work_que.c	/^void queDestroy(pQue_t pq){$/;"	f
+queGet	work_que.c	/^int queGet(pQue_t pq, pNode_t *p){$/;"	f
+queInit	work_que.c	/^void queInit(pQue_t pq, int capacity){$/;"	f
+queInsert	work_que.c	/^void queInsert(pQue_t pq, pNode_t pNew){$/;"	f
+queryMySQL	func_mysql.c	/^int queryMySQL(MYSQL* conn, char* queryInfo, char* resultInfo){$/;"	f
+queryMySQLForUser	func_mysql.c	/^int queryMySQLForUser(MYSQL* conn, char* queryInfo, User_t* pUser){$/;"	f
+recvCycle	transmission.c	/^int recvCycle(int sfd, void* buf, long fileSize){$/;"	f
+recvCycleCnt	transmission.c	/^int recvCycleCnt(int sfd, void* buf, long fileSize){$/;"	f
+recvFile	transmission.c	/^int recvFile(int sfd, MYSQL* conn,linkMsg_t* plmsg, UserState_t* pUState){$/;"	f
+reverse	commend.c	/^void reverse(char* str, int low, int high)$/;"	f
+sendErrorMsg	commend.c	/^void sendErrorMsg(int fd, linkMsg_t* plmsg)$/;"	f
+tcpInit	tcpInit.c	/^int tcpInit(char* ip, char* port){$/;"	f
+threadExitFunc	factory.c	/^void threadExitFunc(void *p){$/;"	f
+threadFun	factory.c	/^void* threadFun(void *p){$/;"	f
+transmiss	transmission.c	/^int transmiss(int tranFd, MYSQL* conn,linkMsg_t *plmsg, UserState_t* pUState){$/;"	f
+updateCurrentDir	func_mysql.c	/^int updateCurrentDir(MYSQL* conn,char* userName, char* currentDirId)$/;"	f
+updateMySQL	func_mysql.c	/^int updateMySQL(MYSQL* conn, char* updateInfo, char* resultInfo){$/;"	f
+updateOPTime	func_mysql.c	/^int updateOPTime(MYSQL* conn, char* userID, time_t t){$/;"	f
+userEnroll	commend.c	/^int userEnroll(int fd, MYSQL* conn,linkMsg_t* plmsg)$/;"	f
+userLogin	commend.c	/^int userLogin(int fd, MYSQL* conn, linkMsg_t* plmsg, UserState_t* pUState)$/;"	f

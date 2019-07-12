@@ -1,0 +1,132 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ARGS_CHECK	include/fun_all.h	34;"	d
+CDCOMMEND	include/client.h	/^    CDCOMMEND,$/;"	e	enum:commend_num
+CFFLAG	Makefile	/^CFFLAG:=-lcrypt -lpthread -lrt$/;"	m
+CFFLAG	src/Makefile	/^CFFLAG:=-lcrypt -lpthread -lrt$/;"	m
+Compute_file_md5	src/main_md5.c	/^int Compute_file_md5(const char *file_path, char *md5_str)$/;"	f
+Compute_string_md5	src/main_md5.c	/^int Compute_string_md5(unsigned char *dest_str, unsigned int dest_len, char *md5_str)$/;"	f
+DIRIDSIZE	include/client.h	10;"	d
+DIRNAMESIZE	include/client.h	11;"	d
+ELF	Makefile	/^ELF:=client$/;"	m
+ELF	src/Makefile	/^ELF:=client$/;"	m
+ERROR_CHECK	include/fun_all.h	35;"	d
+ERROR_DEBUG	include/client.h	15;"	d
+F	include/md5.h	12;"	d
+FAIL_FLAG	include/client.h	/^    FAIL_FLAG = 100,$/;"	e	enum:flag_return
+FALSE	include/client.h	6;"	d
+FF	include/md5.h	18;"	d
+Factory_t	include/client.h	/^}Factory_t, *pFactory_t;$/;"	t	typeref:struct:__anon2
+G	include/md5.h	13;"	d
+GETSCOMMEND	include/client.h	/^    GETSCOMMEND,$/;"	e	enum:commend_num
+GG	include/md5.h	24;"	d
+H	include/md5.h	14;"	d
+HELPCOMMEND	include/client.h	/^    HELPCOMMEND         \/\/8,查看帮助$/;"	e	enum:commend_num
+HH	include/md5.h	30;"	d
+I	include/md5.h	15;"	d
+II	include/md5.h	36;"	d
+LSCOMMEND	include/client.h	/^    LSCOMMEND,$/;"	e	enum:commend_num
+MD5Decode	src/md5.c	/^void MD5Decode(unsigned int *output, unsigned char *input, unsigned int len)$/;"	f
+MD5Encode	src/md5.c	/^void MD5Encode(unsigned char *output,unsigned int *input,unsigned int len)$/;"	f
+MD5Final	src/md5.c	/^void MD5Final(MD5_CTX *context, unsigned char digest[16])$/;"	f
+MD5Init	src/md5.c	/^void MD5Init(MD5_CTX *context)$/;"	f
+MD5Transform	src/md5.c	/^void MD5Transform(unsigned int state[4], unsigned char block[64])$/;"	f
+MD5Update	src/md5.c	/^void MD5Update(MD5_CTX *context, unsigned char *input, unsigned int inputlen)$/;"	f
+MD5_CTX	include/md5.h	/^} MD5_CTX;$/;"	t	typeref:struct:__anon1
+MD5_H	include/md5.h	2;"	d
+MD5_SIZE	src/main_md5.c	12;"	d	file:
+MD5_STR_LEN	src/main_md5.c	13;"	d	file:
+MSGBUFSIZE	include/client.h	8;"	d
+MSGHEADSIZE	include/client.h	9;"	d
+Node_t	include/work_que.h	/^}Node_t, *pNode_t;$/;"	t	typeref:struct:tag_node
+OBJS	Makefile	/^OBJS:=$(patsubst %.c,%.o,$(SRCS))$/;"	m
+OBJS	src/Makefile	/^OBJS:=$(patsubst %.c,%.o,$(SRCS))$/;"	m
+PADDING	src/md5.c	/^unsigned char PADDING[] =$/;"	v
+PUTSCOMMEND	include/client.h	/^    PUTSCOMMEND,$/;"	e	enum:commend_num
+PWDCOMMEND	include/client.h	/^    PWDCOMMEND,$/;"	e	enum:commend_num
+Que_t	include/work_que.h	/^}Que_t, *pQue_t;$/;"	t	typeref:struct:__anon3
+READ_DATA_SIZE	src/main_md5.c	11;"	d	file:
+RMCOMMEND	include/client.h	/^    RMCOMMEND,$/;"	e	enum:commend_num
+ROTATE_LEFT	include/md5.h	16;"	d
+SRCS	Makefile	/^SRCS:=$(wildcard *.c)$/;"	m
+SRCS	src/Makefile	/^SRCS:=$(wildcard *.c)$/;"	m
+STDIN_MAX	include/client.h	4;"	d
+SUCCESS	include/client.h	/^    SUCCESS,$/;"	e	enum:flag_return
+TEST_DOWNLOAD	include/client.h	3;"	d
+THREAD_ERROR_CHECK	include/fun_all.h	36;"	d
+TOKEN	src/window.c	/^char TOKEN[40];$/;"	v
+TOKEN_OVERTIME	include/client.h	/^    TOKEN_OVERTIME$/;"	e	enum:flag_return
+TRUE	include/client.h	5;"	d
+USERENROLL	include/client.h	/^    USERENROLL=0,$/;"	e	enum:commend_num
+USERIDSIZE	include/client.h	12;"	d
+USERLOGIN	include/client.h	/^    USERLOGIN,$/;"	e	enum:commend_num
+USERNAMESIZE	include/client.h	13;"	d
+_GNU_SOURCE	include/fun_all.h	2;"	d
+_XOPEN_SOURCE	include/fun_all.h	3;"	d
+buf	include/client.h	/^    char buf[MSGBUFSIZE];\/\/文件名，接收目录$/;"	m	struct:linkMsg
+buffer	include/md5.h	/^	unsigned char buffer[64];   $/;"	m	struct:__anon1
+capacity	include/work_que.h	/^    int capacity;$/;"	m	struct:__anon3
+commend_num	include/client.h	/^enum commend_num$/;"	g
+cond	include/client.h	/^    pthread_cond_t cond;$/;"	m	struct:__anon2
+count	include/md5.h	/^	unsigned int count[2];$/;"	m	struct:__anon1
+dealLine	src/stdin_deal.c	/^static void dealLine(char* from, char* to){$/;"	f	file:
+download	src/tranFun.c	/^int download(int socketFd, char* filename){$/;"	f
+epollAdd	src/client.c	/^int epollAdd(int epfd, int fd)$/;"	f
+exitFds	src/client.c	/^int exitFds[2];$/;"	v
+exitHandler	src/client.c	/^void exitHandler(int signum)$/;"	f
+factoryDestroy	src/factory.c	/^void factoryDestroy(pFactory_t pf){$/;"	f
+factoryInit	src/factory.c	/^int factoryInit(pFactory_t pf,int threadNum,int capacity){$/;"	f
+factoryStart	src/factory.c	/^int factoryStart(pFactory_t pf){$/;"	f
+filePathAndName	include/work_que.h	/^    char filePathAndName[256];$/;"	m	struct:tag_node
+fileSize	include/client.h	/^    size_t fileSize;\/\/8字节,文件大小$/;"	m	struct:linkMsg
+flag	include/client.h	/^    int flag;\/\/标志位 读写浏览$/;"	m	struct:linkMsg
+flag	include/work_que.h	/^    int flag;$/;"	m	struct:tag_node
+flag_return	include/client.h	/^enum flag_return$/;"	g
+getCommendFromStdin	src/stdin_deal.c	/^int getCommendFromStdin(char* dataStr){$/;"	f
+helpManual	src/window.c	/^void helpManual(){$/;"	f
+ip	include/work_que.h	/^    char ip[60];$/;"	m	struct:tag_node
+isAlpha	src/stdin_deal.c	/^static int isAlpha(char c){$/;"	f	file:
+isSpace	src/stdin_deal.c	/^static int isSpace(char c){$/;"	f	file:
+linkMsg	include/client.h	/^typedef struct linkMsg{$/;"	s
+linkMsg_t	include/client.h	/^}linkMsg_t;$/;"	t	typeref:struct:linkMsg
+main	src/client.c	/^int main(int argc,char* argv[])$/;"	f
+mutex	include/work_que.h	/^    pthread_mutex_t mutex;$/;"	m	struct:__anon3
+pFactory_t	include/client.h	/^}Factory_t, *pFactory_t;$/;"	t	typeref:struct:__anon2
+pNext	include/work_que.h	/^    struct tag_node *pNext;$/;"	m	struct:tag_node	typeref:struct:tag_node::tag_node
+pNode_t	include/work_que.h	/^}Node_t, *pNode_t;$/;"	t	typeref:struct:tag_node
+pQue_t	include/work_que.h	/^}Que_t, *pQue_t;$/;"	t	typeref:struct:__anon3
+port	include/work_que.h	/^    char port[8];$/;"	m	struct:tag_node
+printForCd	src/client.c	/^void printForCd(char* buf)$/;"	f
+printForLs	src/client.c	/^void printForLs(char* buf)$/;"	f
+printForPwd	src/client.c	/^void printForPwd(char* buf)$/;"	f
+printForRm	src/client.c	/^void printForRm(char* buf)$/;"	f
+pthid	include/client.h	/^    pthread_t *pthid;$/;"	m	struct:__anon2
+que	include/client.h	/^    Que_t que;$/;"	m	struct:__anon2
+queDestroy	src/work_que.c	/^void queDestroy(pQue_t pq){$/;"	f
+queGet	src/work_que.c	/^int queGet(pQue_t pq, pNode_t *p){$/;"	f
+queHead	include/work_que.h	/^    pNode_t queHead, queTail;$/;"	m	struct:__anon3
+queInit	src/work_que.c	/^void queInit(pQue_t pq, int capacity){$/;"	f
+queInsert	src/work_que.c	/^void queInsert(pQue_t pq, pNode_t pNew){$/;"	f
+queTail	include/work_que.h	/^    pNode_t queHead, queTail;$/;"	m	struct:__anon3
+recvCycle	src/recvFun.c	/^int recvCycle(int sfd, void* buf, int fileSize){$/;"	f
+recvCycleFile	src/recvFun.c	/^int recvCycleFile(int sfd, void* buf, int fileSize){$/;"	f
+simpleCommend	src/tranFun.c	/^int simpleCommend(int socketFd, char* dirName, int command, void (*print)(char* Info))$/;"	f
+simpleCommendNoParameter	src/tranFun.c	/^int simpleCommendNoParameter(int socketFd, int command, void (*print)(char* Info))$/;"	f
+size	include/client.h	/^    int size;\/\/总长度$/;"	m	struct:linkMsg
+size	include/work_que.h	/^    int size;$/;"	m	struct:__anon3
+startFlag	include/client.h	/^    int startFlag;$/;"	m	struct:__anon2
+state	include/md5.h	/^	unsigned int state[4];$/;"	m	struct:__anon1
+tag_node	include/work_que.h	/^typedef struct tag_node{$/;"	s
+tcp_client	src/tcp_cli.c	/^int tcp_client(char* ip, char* port){$/;"	f
+threadExitFunc	src/factory.c	/^void threadExitFunc(void *p){$/;"	f
+threadFun	src/factory.c	/^void* threadFun(void *p){$/;"	f
+threadNum	include/client.h	/^    int threadNum;$/;"	m	struct:__anon2
+token	include/client.h	/^    char token[40];$/;"	m	struct:linkMsg
+upload	src/tranFun.c	/^int upload(int socketFd, char* filename){$/;"	f
+userEnroll	src/window.c	/^static int userEnroll(int fd){$/;"	f	file:
+userLogin	src/window.c	/^static int userLogin(int fd){$/;"	f	file:
+windowForLogin	src/window.c	/^int windowForLogin(int fd){$/;"	f

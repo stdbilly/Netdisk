@@ -1,0 +1,6 @@
+from:=$(wildcard *.c)
+to:=$(patsubst %.c,%,$(from))
+$(to):$(from)
+	gcc -o $(to) $(from) -g
+clean:
+	rm -r $(to)
