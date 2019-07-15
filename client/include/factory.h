@@ -16,6 +16,7 @@ int factoryInit(int *sfd,pFactory_t p);
 int factoryStart(pFactory_t);
 int epollAdd(int epfd,int fd);
 int tcpConnect(int *sfd);
+int threadPoolExit(pFactory_t pf);
 
 int recvCycle(int sfd,void* buf,int recvLen);
 int putsFile(int serverFd);

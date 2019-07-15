@@ -18,9 +18,9 @@ void* threadFunc(void *p) {
         getTaskSuccess=queGet(pq,&pGet);//拿任务
         pthread_cleanup_pop(1);
         if(!getTaskSuccess){
-           transFile(pGet->serverFd);
-           close(pGet->serverFd);
-           free(pGet);
+            putsFile(pGet->serverFd);
+            close(pGet->serverFd);
+            free(pGet);
         }
         pGet=NULL;
     }
@@ -84,3 +84,16 @@ int recvCycle(int sfd,void* buf,int recvLen) {
     return 0;
 }
 
+int threadPoolExit(pFactory_t pf) {
+    int j;
+    for(j=0;j<pf->threadNum;j++) {
+        pthread_cancel(pf->pthid[j]);
+    }
+    for(j=0;j<pf->threadNum;j++) {
+        pthread_join(pf->pthid[j],NULL);
+        //printf("threadRet=%ld\n",threadRet);
+    }
+    printf("thread pool exit\n");
+    destroyQue(&pf->que);
+    exit(0);
+}

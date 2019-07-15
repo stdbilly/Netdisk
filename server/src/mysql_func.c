@@ -1,45 +1,5 @@
 #include "../include/mysql_func.h"
 
-#define SALT_lEN 8
-
-char* genRandomStr(char* str,int len) {
-    int i,flag;
-    srand(time(NULL));
-    for(i=0;i<len;i++) {
-        flag=rand()%3;
-        switch(flag) {
-        case 0:
-            str[i]='A'+rand()%26;
-            break;
-        case 1:
-            str[i]='a'+rand()%26;
-            break;
-        case 2:
-            str[i]='0'+rand()%10;
-            break;
-        }
-    }
-    return str;
-}
-
-int userRegister(MYSQL *db,char *password) {
-    User_t user;
-    bzero(&user,sizeof(User_t));
-    char str[SALT_lEN]={0};
-    strcpy(user.salt,"$6$");
-    strcat(user.salt,genRandomStr(str,SALT_lEN));
-    strcpy(user.name,"whb");
-    printf("salt=%s,len=%ld\n",user.salt,strlen(user.salt));
-    strcpy(user.password,crypt(password,user.salt));
-    printf("passwd=%s,len=%ld\n",user.password,strlen(user.password));
-
-    char insertCMD[300]={0};
-    char temp[50]="INSERT INTO user(name, salt, password) values(";
-    sprintf(insertCMD,"%s'%s','%s','%s')",temp,user.name,user.salt,user.password);
-    puts(insertCMD);
-    modifyDB(db,insertCMD);
-    return 0;
-}
 int connectDB(MYSQL **db) {
     char server[10]={0};
     char user[10]={0};
@@ -118,6 +78,7 @@ int queryUser(MYSQL *db,char* cmd,pUser_t puser) {
             strcpy(puser->name,row[1]);
             strcpy(puser->salt,row[2]);
             strcpy(puser->password,row[3]);
+            printf("queryUser success\n");
         }else{//没有查询到数据
             printf("empty set\n");
             mysql_free_result(res);

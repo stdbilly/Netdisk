@@ -1,6 +1,6 @@
-#include "../include/factory.h"
+#include "../include/cmd.h"
 
-int exitFds[0];
+int exitFds[2];
 void exitFunc(int sigNum){
     printf("%d is coming\n",sigNum);
     write(exitFds[1],&sigNum,1);
@@ -30,28 +30,28 @@ int main(int argc,char* argv[])
     epollAdd(epfd,STDIN_FILENO);
     pQue_t pq=&threadInfo.que;
     pNode_t pNew;
-    int readyFdCcount,i,j;
+    int readyFdCcount,i;
+    
+    //先登录或注册
+    int ret;
+    ret=loginWindow(serverFd);
+    if(ret){//退出
+        threadPoolExit(&threadInfo);
+    }
+    printf("______\n");
+    while(1);
+
     while(1){
         readyFdCcount=epoll_wait(epfd,evs,3,-1);
         for(i=0;i<readyFdCcount;i++){
 
             if(evs[i].data.fd==exitFds[0]) {
-                //long threadRet;
-                for(j=0;j<threadInfo.threadNum;j++) {
-                    pthread_cancel(threadInfo.pthid[j]);
-                }
-                for(j=0;j<threadInfo.threadNum;j++) {
-                    pthread_join(threadInfo.pthid[j],NULL);
-                    //printf("threadRet=%ld\n",threadRet);
-                }
-                destroyQue(pq);
-                exit(0);
+               threadPoolExit(&threadInfo); 
             }
 
             if(evs[i].data.fd==serverFd) {
-                clientFd=accept(serverFd,NULL,NULL);
                 pNew=(pNode_t)calloc(1,sizeof(Node_t));
-                pNew->serverFd=clientFd;
+                pNew->serverFd=serverFd;
                 pthread_mutex_lock(&pq->mutex);
                 queInsert(pq,pNew);
                 pthread_mutex_unlock(&pq->mutex);

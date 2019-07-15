@@ -14,8 +14,6 @@ typedef struct user{
 int connectDB(MYSQL **db);//连接数据库
 int modifyDB(MYSQL *db,char* cmd);//更新、插入、删除操作
 int queryDB(MYSQL *db,char* cmd);//查询数据库
-char* genRandomStr(char* str,int len);
-int userRegister(MYSQL *db,char *password);
 int queryUser(MYSQL *db,char* cmd,pUser_t puser);
 
 #endif

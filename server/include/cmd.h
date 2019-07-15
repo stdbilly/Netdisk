@@ -29,6 +29,9 @@ enum return_flag{
     FILE_EXIST
 };
 
+char* genRandomStr(char* str,int len);
 int userLogin(int clientFd,MYSQL *db,pMessage_t pmsg);
 int userRegister(int clientFd,MYSQL *db,pMessage_t pmsg);
+int getUserInfo(char *buf,pUser_t puser);
+void sendErrMsg(int clientFd,pMessage_t pmsg);
 #endif

@@ -1,4 +1,4 @@
-#include "../include/factory.h"
+#include "../include/cmd.h"
 
 void cleanUp(void *p) {
     pthread_mutex_unlock((pthread_mutex_t*)p);
@@ -8,7 +8,8 @@ void* threadFunc(void *p) {
     pFactory_t pthreadInfo=(pFactory_t)p;
     pQue_t pq=&pthreadInfo->que;
     pNode_t pGet;
-    int getTaskSuccess;
+    int getTaskSuccess,ret;
+    Message_t msg;
     while(1){
         pthread_mutex_lock(&pq->mutex);
         pthread_cleanup_push(cleanUp,&pq->mutex);
@@ -18,9 +19,35 @@ void* threadFunc(void *p) {
         getTaskSuccess=queGet(pq,&pGet);//拿任务
         pthread_cleanup_pop(1);
         if(!getTaskSuccess){
-           transFile(pGet->clientFd);
-           close(pGet->clientFd);
-           free(pGet);
+            MYSQL *db;
+            connectDB(&db);
+            while(1){
+                //接收客户端请求
+                bzero(&msg,sizeof(msg));
+                ret=recvCycle(pGet->clientFd,&msg,MSGHEAD_LEN);//接收flag
+                if(ret==-1){
+                    goto DISCONNECT;
+                }
+                ret=recvCycle(pGet->clientFd,msg.buf,msg.dataLen-MSGHEAD_LEN);//接收flag
+                if(ret==-1){
+                    goto DISCONNECT;
+                }
+              
+                switch(msg.flag){
+                case LOGIN:
+                    userLogin(pGet->clientFd,db,&msg);
+                    break;
+                case REGISTER:
+                    userRegister(pGet->clientFd,db,&msg);
+                default:
+                    break;
+                }
+            }
+DISCONNECT:
+            close(pGet->clientFd);
+            free(pGet);
+            mysql_close(db);
+            printf("user disconncet\n");
         }
         pGet=NULL;
     }

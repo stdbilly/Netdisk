@@ -1,4 +1,4 @@
-#include "../include/factory.h"
+#include "../include/cmd.h"
 
 int exitFds[0];
 void sigFunc(int sigNum){
@@ -30,6 +30,7 @@ int main(int argc,char* argv[])
     pQue_t pq=&threadInfo.que;
     pNode_t pNew;
     int readyFdCcount,i,j;
+
     while(1){
         readyFdCcount=epoll_wait(epfd,evs,2,-1);
         for(i=0;i<readyFdCcount;i++){

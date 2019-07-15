@@ -1,6 +1,7 @@
 #ifndef __HEAD_H__
 #define __HEAD_H__
 #define _XOPEN_SOURCE
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
