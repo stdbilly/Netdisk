@@ -2,22 +2,22 @@
 #define __FACTORY_H__
 #include "work_que.h"
 
-#define SERVER_CONF "../conf/server.conf"//服务器配置文件
+#define SERVER_CONF "../conf/server.conf"  //服务器配置文件
 
-typedef struct{
+typedef struct {
     Que_t que;
-    pthread_t *pthid;//存储线程ID的起始地址
+    pthread_t *pthid;  //存储线程ID的起始地址
     pthread_cond_t cond;
     int threadNum;
-    short startFlag;//线程池是否启动
-}Factory_t,*pFactory_t;
+    short startFlag;  //线程池是否启动
+} Factory_t, *pFactory_t;
 
-int factoryInit(int *sfd,pFactory_t p);
+int factoryInit(int *sfd, pFactory_t p);
 int factoryStart(pFactory_t);
-int epollAdd(int epfd,int fd);
+int epollAdd(int epfd, int fd);
 
 int send_file(int clientFd);
 int recv_file(int clientFd);
-int recvCycle(int sfd,void* buf,int recvLen);
+int recvCycle(int sfd, void *buf, int recvLen);
 
 #endif
