@@ -18,8 +18,8 @@ void* threadFunc(void *p) {
         getTaskSuccess=queGet(pq,&pGet);//拿任务
         pthread_cleanup_pop(1);
         if(!getTaskSuccess){
-           transFile(pGet->clientFd);
-           close(pGet->clientFd);
+           transFile(pGet->serverFd);
+           close(pGet->serverFd);
            free(pGet);
         }
         pGet=NULL;
@@ -48,10 +48,10 @@ int epollAdd(int epfd,int fd) {
 }
 
 int factoryInit(int *sfd,pFactory_t p) {
-    int port, threadNum, capacity,socketFd;
+    int port,serverFd,ret,threadNum,capacity;
     char ip[20]={0};
     FILE *config;
-    config=fopen(SERVER_CONF,"r");
+    config=fopen(CLIENT_CONF,"r");
     fscanf(config,"%s %d %d %d",ip,&port,&threadNum,&capacity);
 
     queInit(&p->que,capacity);
@@ -60,20 +60,27 @@ int factoryInit(int *sfd,pFactory_t p) {
     p->threadNum=threadNum;
     p->startFlag=0;
 
-    socketFd=socket(AF_INET,SOCK_STREAM,0);
-    ERROR_CHECK(socketFd,-1,"socket");
+    serverFd=socket(AF_INET,SOCK_STREAM,0);
+    ERROR_CHECK(serverFd,-1,"socket");
     struct sockaddr_in serAddr;
     bzero(&serAddr,sizeof(serAddr));
     serAddr.sin_family=AF_INET;
     serAddr.sin_port=htons(port);
     serAddr.sin_addr.s_addr=inet_addr(ip);
-    int ret,reuse=1;
-    ret=setsockopt(socketFd,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int));
-    ERROR_CHECK(ret,-1,"setsockopt");
-    ret=bind(socketFd,(struct sockaddr*)&serAddr,sizeof(serAddr));
-    ERROR_CHECK(ret,-1,"bind");
-    listen(socketFd,10);
-    *sfd=socketFd;
+    ret=connect(serverFd,(struct sockaddr*)&serAddr,sizeof(serAddr));
+    ERROR_CHECK(ret,-1,"connect");
+    *sfd=serverFd;
+    return 0;
+}
+
+int recvCycle(int sfd,void* buf,int recvLen) {
+    char *p=(char*)buf;
+    int ret,total=0;
+    while(total<recvLen) {
+        ret=recv(sfd,p+total,recvLen-total,0);
+        ERROR_CHECK(ret,-1,"recv");
+        total+=ret;
+    }
     return 0;
 }
 

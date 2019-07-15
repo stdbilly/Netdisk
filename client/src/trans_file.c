@@ -1,6 +1,6 @@
 #include "../include/factory.h"
 
-#define FILENAME "44.day10-项目讲解.avi"
+#define FILENAME "../data/44.day10-项目讲解.avi"
 
 typedef struct{
     int dataLen;
@@ -8,37 +8,38 @@ typedef struct{
 }fileInfo_t;
 
 
-int send_file(int clientFd)
-{
+int putsFile(int serverFd) {
     fileInfo_t file;
     int ret;
     file.dataLen=strlen(FILENAME);
     strcpy(file.buf,FILENAME);
-    send(clientFd,&file,4+file.dataLen,0);//发送文件名
+    send(serverFd,&file,4+file.dataLen,0);//发送文件名
     int fd=open(FILENAME,O_RDWR);
     struct stat buf;
     fstat(fd,&buf);//获取文件大小
     file.dataLen=sizeof(buf.st_size);
     memcpy(file.buf,&buf.st_size,file.dataLen);
-    send(clientFd,&file,4+file.dataLen,0);//发送文件大小
+    send(serverFd,&file,4+file.dataLen,0);//发送文件大小
     //发送文件内容
-    ret=sendfile(clientFd,fd,NULL,buf.st_size);
+    ret=sendfile(serverFd,fd,NULL,buf.st_size);
     printf("sendflie ret=%d\n",ret);
     ERROR_CHECK(ret,-1,"sendflie");
+    printf("upload success\n");
+    close(fd);
     return 0;
 }
 
-int recv_file(int clientFd) {
+int getsFile(int serverFd) {
     int fd,dataLen,ret;
     char buf[1000]={0};
-    recvCycle(clientFd,&dataLen,4);
-    recvCycle(clientFd,buf,dataLen);//接收文件名
+    recvCycle(serverFd,&dataLen,4);
+    recvCycle(serverFd,buf,dataLen);//接收文件名
     fd=open(buf,O_RDWR|O_CREAT,0666);
     ERROR_CHECK(fd,-1,"open");
     //接收文件大小
     off_t fileSize,download=0,lastDownload=0,slice;
-    recvCycle(clientFd,&dataLen,4);
-    recvCycle(clientFd,&fileSize,dataLen);
+    recvCycle(serverFd,&dataLen,4);
+    recvCycle(serverFd,&fileSize,dataLen);
     printf("fileSize=%ld\n",fileSize);
     int fds[2];
     pipe(fds);
@@ -46,7 +47,7 @@ int recv_file(int clientFd) {
     gettimeofday(&start,NULL);
     slice=fileSize/1000;
     while(download<fileSize) {
-        ret=splice(clientFd,NULL,fds[1],NULL,65536,SPLICE_F_MOVE|SPLICE_F_MORE);
+        ret=splice(serverFd,NULL,fds[1],NULL,65536,SPLICE_F_MOVE|SPLICE_F_MORE);
         if(ret==0) {
             break;
         }
@@ -66,18 +67,4 @@ int recv_file(int clientFd) {
     printf("donload success, use time=%ld\n",(end.tv_sec-start.tv_sec)*1000000+end.tv_usec-start.tv_usec);
     close(fd);
     return 0;
-    
 }
-
-int recvCycle(int sfd,void* buf,int recvLen)
-{
-    char *p=(char*)buf;
-    int ret,total=0;
-    while(total<recvLen) {
-        ret=recv(sfd,p+total,recvLen-total,0);
-        ERROR_CHECK(ret,-1,"recv");
-        total+=ret;
-    }
-    return 0;
-}
-

@@ -14,8 +14,11 @@ typedef struct{
 
 int factoryInit(int *sfd,pFactory_t p);
 int factoryStart(pFactory_t);
-int tcpInit(char* ip,int port);
-int transFile(int clientFd);
 int epollAdd(int epfd,int fd);
+int tcpConnect(int *sfd);
+
+int recvCycle(int sfd,void* buf,int recvLen);
+int putsFile(int serverFd);
+int getsFile(int serverFd);
 
 #endif

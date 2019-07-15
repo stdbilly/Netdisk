@@ -9,12 +9,13 @@ typedef struct user{
     char name[20];
     char salt[20];
     char password[100];
-}User_t;
+}User_t,*pUser_t;
 
 int connectDB(MYSQL **db);//连接数据库
-int updateDB(MYSQL *db,char* cmd);//更新、插入、删除操作
+int modifyDB(MYSQL *db,char* cmd);//更新、插入、删除操作
 int queryDB(MYSQL *db,char* cmd);//查询数据库
-void genRandomStr(char* str);
+char* genRandomStr(char* str,int len);
 int userRegister(MYSQL *db,char *password);
+int queryUser(MYSQL *db,char* cmd,pUser_t puser);
 
 #endif

@@ -1,12 +1,11 @@
 #include "../include/mysql_func.h"
 
-#define SALT_lEN 11
+#define SALT_lEN 8
 
-void genRandomStr(char* str) {
+char* genRandomStr(char* str,int len) {
     int i,flag;
-    strcpy(str,"$6$");
     srand(time(NULL));
-    for(i=3;i<SALT_lEN;i++) {
+    for(i=0;i<len;i++) {
         flag=rand()%3;
         switch(flag) {
         case 0:
@@ -20,12 +19,15 @@ void genRandomStr(char* str) {
             break;
         }
     }
+    return str;
 }
 
 int userRegister(MYSQL *db,char *password) {
     User_t user;
     bzero(&user,sizeof(User_t));
-    genRandomStr(user.salt);
+    char str[SALT_lEN]={0};
+    strcpy(user.salt,"$6$");
+    strcat(user.salt,genRandomStr(str,SALT_lEN));
     strcpy(user.name,"whb");
     printf("salt=%s,len=%ld\n",user.salt,strlen(user.salt));
     strcpy(user.password,crypt(password,user.salt));
@@ -35,7 +37,7 @@ int userRegister(MYSQL *db,char *password) {
     char temp[50]="INSERT INTO user(name, salt, password) values(";
     sprintf(insertCMD,"%s'%s','%s','%s')",temp,user.name,user.salt,user.password);
     puts(insertCMD);
-    updateDB(db,insertCMD);
+    modifyDB(db,insertCMD);
     return 0;
 }
 int connectDB(MYSQL **db) {
@@ -60,7 +62,7 @@ int connectDB(MYSQL **db) {
     return 0;
 }
 
-int updateDB(MYSQL *db,char* cmd) {
+int modifyDB(MYSQL *db,char* cmd) {
     int ret;
     ret=mysql_query(db,cmd);
     MYSQL_ERROR_CHECK(ret,"mysql_query",db);
@@ -102,3 +104,31 @@ int queryDB(MYSQL *db,char* cmd) {
     mysql_free_result(res);
     return 0;
 }
+
+int queryUser(MYSQL *db,char* cmd,pUser_t puser) {
+    int ret;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    ret=mysql_query(db,cmd);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    printf("query ret=%d\n",ret);
+    res=mysql_use_result(db);
+    if(res){
+        if((row=mysql_fetch_row(res))!=NULL){
+            strcpy(puser->name,row[1]);
+            strcpy(puser->salt,row[2]);
+            strcpy(puser->password,row[3]);
+        }else{//没有查询到数据
+            printf("empty set\n");
+            mysql_free_result(res);
+            return -1;
+        }
+    }else{
+        printf("result is NULL\n");
+        mysql_free_result(res);
+        return -1;
+    }
+    mysql_free_result(res);
+    return 0;
+}
+

@@ -30,11 +30,10 @@
 #include <netdb.h>
 #include <sys/epoll.h>
 #include <sys/uio.h>
-#include <mysql/mysql.h>
+#include <sys/sendfile.h>
 #include <aio.h>
 #define ARGS_CHECK(argc,val) {if(argc!=val)  {printf("error args\n");return -1;}}
 #define ERROR_CHECK(ret,retVal,funcName) {if(ret==retVal) {perror(funcName);return -1;}}
 #define THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return -1;}}
 #define CHILD_THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return (void*)-1;}}
-#define MYSQL_ERROR_CHECK(ret,funcName,db) {if(ret!=0) {printf("%s:%s\n",funcName,mysql_error(db));return -1;}}
 

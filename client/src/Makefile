@@ -1,8 +1,8 @@
 SRCS:=$(wildcard *.c)
 OBJS:=$(patsubst %.c,%.o,$(SRCS))
-ELF:=server
+ELF:=client
 CC:=gcc
-CFLAGS:=-Wall -lpthread -I /usr/include/mysql/  -I ../include/ -lmysqlclient -lcrypt
+CFLAGS:=-Wall -lpthread -I ../include/ -lcrypt
 $(ELF):$(OBJS)
 	gcc $^ -o $@ $(CFLAGS)
 .PYONY:clean
