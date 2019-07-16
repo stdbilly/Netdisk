@@ -18,8 +18,10 @@ int epollAdd(int epfd,int fd);
 int tcpConnect(int *sfd);
 int threadPoolExit(pFactory_t pf);
 
+
 int recvCycle(int sfd,void* buf,int recvLen);
 int putsFile(int serverFd);
 int getsFile(int serverFd);
-
+int sendRanStr(int fd, pDataStream pData);
+int recvRanStr(int fd, pDataStream pData, const char* user_name);
 #endif

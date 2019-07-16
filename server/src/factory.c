@@ -9,7 +9,7 @@ void *threadFunc(void *p) {
     pQue_t pq = &pthreadInfo->que;
     pNode_t pGet;
     int getTaskSuccess, ret;
-    Message_t msg;
+    DataStream data;
     while (1) {
         pthread_mutex_lock(&pq->mutex);
         pthread_cleanup_push(cleanUp, &pq->mutex);
@@ -23,23 +23,18 @@ void *threadFunc(void *p) {
             connectDB(&db);
             while (1) {
                 //接收客户端请求
-                bzero(&msg, sizeof(msg));
-                ret = recvCycle(pGet->clientFd, &msg, MSGHEAD_LEN);  //接收flag
-                if (ret == -1) {
-                    goto DISCONNECT;
-                }
-                ret = recvCycle(pGet->clientFd, msg.buf,
-                                msg.dataLen - MSGHEAD_LEN);  //接收flag
+                bzero(&data, sizeof(data));
+                ret = recvCycle(pGet->clientFd, &data, DATAHEAD_LEN);  //接收flag
                 if (ret == -1) {
                     goto DISCONNECT;
                 }
 
-                switch (msg.flag) {
+                switch (data.flag) {
                     case LOGIN:
-                        userLogin(pGet->clientFd, db, &msg);
+                        userLogin(pGet->clientFd, db, &data);
                         break;
                     case REGISTER:
-                        userRegister(pGet->clientFd, db, &msg);
+                        userRegister(pGet->clientFd, db, &data);
                     default:
                         break;
                 }

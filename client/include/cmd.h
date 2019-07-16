@@ -2,13 +2,13 @@
 #define __CMD_H__
 #include "factory.h"
 
-#define MSGHEAD_LEN 8 
+#define DATAHEAD_LEN 8 
 
 typedef struct {
     int dataLen;
-    int flag;//cmd_no标志
-    char buf[128];
-}Message_t,*pMessage_t;
+    int flag;//cmd_no
+    char buf[1000];
+}DataStream,*pDataStream;
 
 enum CMD_NO{
     LOGIN,
@@ -27,7 +27,7 @@ enum return_flag{
     SUCCESS=100,
     FAIL,
     NO_USER,
-    NAME_EXIST,
+    USER_EXIST,
     FILE_EXIST 
 };
 

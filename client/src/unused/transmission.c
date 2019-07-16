@@ -272,7 +272,7 @@ int user_signup(int* socketFd, const char* ip, const char* port, char* user_name
             flag = 0;
             close(*socketFd);
         }
-        else if (data->data_len == -1)
+        else if (data->data_len == -1)//用户名已存在
         {
             err = -1;
             close(*socketFd);

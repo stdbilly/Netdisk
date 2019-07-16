@@ -94,7 +94,7 @@ int queryUser(MYSQL *db, char *cmd, pUser_t puser) {
     return 0;
 }
 
-MYSQL_RES*  mysqlSelect(MYSQL* db,const char* table,const char* field,const char* condition){
+MYSQL_RES*  selectDB(MYSQL* db,const char* table,const char* field,const char* condition){
     MYSQL_RES* res=NULL;
     char query[300]={0};
     sprintf(query,"SELECT * FROM %s WHERE %s = '%s'", table, field, condition);

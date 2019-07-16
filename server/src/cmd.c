@@ -2,6 +2,7 @@
 
 #define TOKEN_LEN 8
 #define SALT_lEN 8
+#define DEBUG
 
 int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     User_t user;
@@ -17,7 +18,7 @@ int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     if (ret == -1) {
         pData->flag = NO_USER;
         strcpy(pData->buf, "此用户未注册！");
-        pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
         send(clientFd, pData, pData->dataLen, 0);
         return -1;
     }
@@ -25,28 +26,29 @@ int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     //发送salt给客户端
     strcpy(pData->buf, user.salt);
     pData->flag = SUCCESS;
-    pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
     //接收用户发来的密文
-    recvCycle(clientFd, pData, MSGHEAD_LEN);
-    recvCycle(clientFd, pData->buf, pData->dataLen - MSGHEAD_LEN);
+    recvCycle(clientFd, pData, DATAHEAD_LEN);
+    recvCycle(clientFd, pData->buf, pData->dataLen - DATAHEAD_LEN);
     //比对用户发来的密文
     if (!strcmp(pData->buf, user.password)) {
         //密码正确，生成token，发送给客户端，存入数据库
         char token[TOKEN_LEN] = {0};
         strcpy(pData->buf, genRandomStr(token, TOKEN_LEN));
         pData->flag = SUCCESS;
-        pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
         send(clientFd, pData, pData->dataLen, 0);
 
         char cmd[200] = "UPDATE user SET token=";
-        sprintf(cmd, "%s'%s' %s'%s'", cmd, pData->buf, "where name=", user.name);
+        sprintf(cmd, "%s'%s' %s'%s'", cmd, pData->buf,
+                "where name=", user.name);
         modifyDB(db, cmd);
         printf("login success\n");
     } else {
         pData->flag = FAIL;
         strcpy(pData->buf, "密码错误！请重新输入");
-        pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
         send(clientFd, pData, pData->dataLen, 0);
         return -1;
     }
@@ -56,10 +58,30 @@ int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
 int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
     User_t user;
     int ret;
-    bzero(&user, sizeof(User_t));
-    getUserInfo(pData->buf, &user);
+    while (pData->flag == REGISTER || pData->flag == USER_EXIST) {
+        bzero(&user, sizeof(User_t));
+        bzero(pData, sizeof(DataStream));
+        recvCycle(clientFd, pData, DATAHEAD_LEN);
+        recvCycle(clientFd, pData->buf,
+                  pData->dataLen - DATAHEAD_LEN);  //接收用户名
+        strcpy(user.name, pData->buf);
+        MYSQL_RES *res;
+        res = selectDB(db, "user", "name", user.name);
+        if (res == NULL) {  //用户名不存在，可以注册
+            mysql_free_result(res);
+            pData->flag = SUCCESS;
+            send(clientFd, pData, DATAHEAD_LEN, 0);
+        } else {
+#ifdef _DEBUG
+            printf("username already used\n");
+#endif
+            mysql_free_result(res);
+            pData->flag = USER_EXIST;
+            send(clientFd, pData, DATAHEAD_LEN, 0);
+        }
+    }
+//------------------------------------------------
 
-    
     char str[20] = {0};
     //生成salt和密文
     strcpy(user.salt, "$6$");
@@ -83,14 +105,14 @@ int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
     queryDB(db, temp);
 
     pData->flag = SUCCESS;
-    pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
     return 0;
 }
 
 void sendErrMsg(int clientFd, pDataStream pData) {
     pData->flag = FAIL;
-    pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
+    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
 }
 

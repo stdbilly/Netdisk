@@ -1,5 +1,5 @@
-#include "../include/sql.h"
-#include "../include/config.h"
+#include "sql.h"
+#include "config.h"
 
 int sql_connect(MYSQL** conn)
 {

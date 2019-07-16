@@ -2,7 +2,7 @@
 #define __CMD_H__
 #include "mysql_func.h"
 
-#define MSGHEAD_LEN 8
+#define DATAHEAD_LEN 8
 
 typedef struct {
     int dataLen;
@@ -23,7 +23,7 @@ enum cmd_no {
     EXIT_CMD
 };
 
-enum return_flag { SUCCESS = 100, FAIL, NO_USER, NAME_EXIST, FILE_EXIST };
+enum return_flag { SUCCESS = 100, FAIL, NO_USER, USER_EXIST, FILE_EXIST };
 
 char *genRandomStr(char *str, int len);
 int userLogin(int clientFd, MYSQL *db, pDataStream pmsg);

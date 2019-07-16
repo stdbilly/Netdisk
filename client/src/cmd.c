@@ -1,6 +1,8 @@
 #include "../include/cmd.h"
 #include "../include/crypto.h"
 
+#define DEBUG ;
+
 int loginWindow(int serverFd) {
     int option, ret;
 login:
@@ -34,84 +36,107 @@ login:
 }
 
 int userLogin(int serverFd) {
-    Message_t msg;
+    DataStream data;
+    data.flag = LOGIN;
+    send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
+
     char tmp[20] = {0};
-    bzero(&msg, sizeof(Message_t));
+    bzero(&data, sizeof(DataStream));
     printf("请输入用户名:");
-    scanf("%s", tmp);
-    strcpy(msg.buf, tmp);
-    msg.flag = LOGIN;
-    msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
-    send(serverFd, &msg, msg.dataLen, 0);  //发送用户名和flag
+    scanf("%s", data.buf);
+    data.dataLen = strlen(data.buf) + DATAHEAD_LEN;
+    send(serverFd, &data, data.dataLen, 0);  //发送用户名和flag
 
     //接收返回信息，salt值或错误信息
-    recvCycle(serverFd, &msg, MSGHEAD_LEN);
-    recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    recvCycle(serverFd, data.buf, data.dataLen - DATAHEAD_LEN);
 
-    printf("flag=%d,buf=%s\n", msg.flag, msg.buf);
-    if (msg.flag == SUCCESS) {
+    printf("flag=%d,buf=%s\n", data.flag, data.buf);
+    if (data.flag == SUCCESS) {
         char password[100] = {0}, *temp;
         temp = getpass("请输入密码:");
-        strcpy(password, crypt(temp, msg.buf));  //密码生成密文
-        bzero(msg.buf, sizeof(msg.buf));
-        strcpy(msg.buf, password);
+        strcpy(password, crypt(temp, data.buf));  //密码生成密文
+        bzero(data.buf, sizeof(data.buf));
+        strcpy(data.buf, password);
         //将密文发送给服务器
-        msg.dataLen = MSGHEAD_LEN + strlen(msg.buf);
-        send(serverFd, &msg, msg.dataLen, 0);
+        data.dataLen = DATAHEAD_LEN + strlen(data.buf);
+        send(serverFd, &data, data.dataLen, 0);
         //接收返回信息token或错误信息
-        bzero(msg.buf, sizeof(msg.buf));
-        recvCycle(serverFd, &msg, MSGHEAD_LEN);
-        recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
+        bzero(data.buf, sizeof(data.buf));
+        recvCycle(serverFd, &data, DATAHEAD_LEN);
+        recvCycle(serverFd, data.buf, data.dataLen - DATAHEAD_LEN);
 
         //保存token
 
-        if (msg.flag == SUCCESS) {
+        if (data.flag == SUCCESS) {
             printf("login success\n");
         } else {
-            printf("error:%s\n", msg.buf);
+            printf("error:%s\n", data.buf);
             return -1;
         }
     } else {
-        printf("error:%s\n", msg.buf);
+        printf("error:%s\n", data.buf);
         return -1;
     }
     return 0;
 }
 
 int userRegister(int serverFd) {
-    Message_t msg;
+    DataStream data;
     int ret;
-    char tmp[20] = {0}, *passwd;
-    bzero(&msg, sizeof(Message_t));
-    printf("请输入用户名(不超过20个字符):");
-    scanf("%s", tmp);
-    sprintf(msg.buf, "%s%s", tmp, "#");
+    char name[NAME_LEN + 1] = {0}, *passwd;
+    bzero(&data, sizeof(DataStream));
+    data.flag = REGISTER;
+    send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
+
+    while (data.flag == REGISTER || data.flag == USER_EXIST) {
+        printf("请输入用户名(不超过20个字符):");
+        scanf("%s", name);
+        strcpy(data.buf, name);
+        data.dataLen = DATAHEAD_LEN + strlen(data.buf);
+
+#ifdef DEBUG
+        printf("buflen=%d\n", strlen(data.buf));
+#endif
+        send(serverFd, &data, data.dataLen, 0);  //发送用户名，服务端查询用户名是否已存在
+
+        recvCycle(serverFd, &data, DATAHEAD_LEN);  //接收flag
+        if (data.flag == USER_EXIST) {
+            printf("用户名已存在，请重新输入\n");
+            sleep(3);
+            system("clear");
+        }
+    }
+
     passwd = getpass("请输入密码(不超过20个字符):");
-    strcat(msg.buf, passwd);
+    ret = rsa_generate_key(name);
+    if (ret) {
+        return -1;
+    }
 
-    printf("msg.buf=%s\n", msg.buf); 
+    ret=sendRanStr(serverFd,&data);
+    printf("data.buf=%s\n", data.buf);
+//-------------------------------------------
 
-    //ret=rsa_generate_key()
-    
     //发送用户名和密码
-    msg.flag = REGISTER;
-    msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
-    send(serverFd, &msg, msg.dataLen, 0);
+    data.flag = REGISTER;
+    data.dataLen = strlen(data.buf) + DATAHEAD_LEN;
+    send(serverFd, &data, data.dataLen, 0);
 
     //接收返回信息
-    recvCycle(serverFd, &msg, MSGHEAD_LEN);
-    recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    recvCycle(serverFd, data.buf, data.dataLen - DATAHEAD_LEN);
 
-    if (msg.flag == SUCCESS) {
+    if (data.flag == SUCCESS) {
         printf("注册成功\n");
     } else {
-        printf("error:%s\n", msg.buf);
+        printf("error:%s\n", data.buf);
         return -1;
     }
     return 0;
 }
 
-void printMenu(){
+void printMenu() {
     printf("请输入以下命令:\n\n");
     printf("ls:         列出文件\n");
     printf("cd <path>:  改变工作路径\n");
