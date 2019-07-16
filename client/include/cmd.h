@@ -19,7 +19,8 @@ enum CMD_NO{
     PWD_CMD,
     PUTS_CMD,
     GETS_CMD,
-    HELP
+    HELP_CMD,
+    EXIT_CMD
 };
 
 enum return_flag{

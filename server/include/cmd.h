@@ -6,9 +6,9 @@
 
 typedef struct {
     int dataLen;
-    int flag;  // cmd_no标志
-    char buf[128];
-} Message_t, *pMessage_t;
+    int flag;  // cmd_no
+    char buf[1000];
+}DataPackage,*pDataPackage;
 
 enum cmd_no {
     LOGIN,
@@ -19,7 +19,8 @@ enum cmd_no {
     PWD_CMD,
     PUTS_CMD,
     GETS_CMD,
-    HELP
+    HELP_CMD,
+    EXIT_CMD
 };
 
 enum return_flag { SUCCESS = 100, FAIL, NO_USER, NAME_EXIST, FILE_EXIST };

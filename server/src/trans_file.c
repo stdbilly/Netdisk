@@ -1,4 +1,5 @@
 #include "../include/factory.h"
+#include "../include/cmd.h"
 
 #define FILENAME "44.day10-项目讲解.avi"
 
@@ -68,6 +69,61 @@ int recv_file(int clientFd) {
     return 0;
 }
 
+int send_nonce(int fd, DataPackage* data, const char* user_name) {
+    char nonce[15];
+    srand((unsigned)(time(NULL)));
+    sprintf(nonce, "%d", rand());
+    strcpy(data->buf, nonce);
+    data->dataLen = strlen(data->buf) + 1;
+    if (send_cycle(fd, (char*)data, data->dataLen + sizeof(int))) {
+        return -1;
+    }
+    if (recv_cycle(fd, (char*)&data->dataLen, sizeof(int))) {
+        return -1;
+    }
+    if (recv_cycle(fd, data->buf, data->dataLen)) {
+        return -1;
+    }
+    char* nonce_tmp;
+    nonce_tmp = rsa_verify(data->buf, user_name);
+    if (nonce_tmp == NULL) {
+        return -1;
+    }
+    if (strcmp(nonce_tmp, nonce) != 0) {
+        free(nonce_tmp);
+        nonce_tmp = NULL;
+        printf("nonce verification failed\n");
+        return -1;
+    }
+    free(nonce_tmp);
+    nonce_tmp = NULL;
+    return 0;
+}
+
+int recv_nonce(int fd, DataPackage* data) {
+    if (recv_cycle(fd, (char*)&data->dataLen, sizeof(int)))  // get nonce
+    {
+        return -1;
+    }
+    if (recv_cycle(fd, data->buf, data->dataLen)) {
+        return -1;
+    }
+    char* nonce_tmp;
+    nonce_tmp = rsa_sign(data->buf);
+    if (nonce_tmp == NULL) {
+        return -1;
+    }
+    memcpy(data->buf, nonce_tmp, SER_EN_LEN);  // sign
+    free(nonce_tmp);
+    nonce_tmp = NULL;
+    data->dataLen = SER_EN_LEN;
+    if (send_cycle(fd, (char*)data, data->dataLen + sizeof(int)))  // send back
+    {
+        return -1;
+    }
+    return 0;
+}
+
 int recvCycle(int sfd, void* buf, int recvLen) {
     char* p = (char*)buf;
     int ret, total = 0;
@@ -75,6 +131,28 @@ int recvCycle(int sfd, void* buf, int recvLen) {
         ret = recv(sfd, p + total, recvLen - total, 0);
         ERROR_CHECK(ret, -1, "recv");
         total += ret;
+    }
+    return 0;
+}
+
+int send_cycle(int sfd, const char* data, int send_len) {
+    int total = 0;
+    int ret;
+    while (total < send_len) {
+        ret = send(sfd, data + total, send_len - total, 0);
+        if (ret == -1) {
+#ifdef _DEBUG
+            printf("transmission interrupted\n");
+#endif
+            return -1;
+        }
+        if (ret == 0) {
+#ifdef _DEBUG
+            printf("transmission closed\n");
+#endif
+            return -1;
+        }
+        total = total + ret;
     }
     return 0;
 }

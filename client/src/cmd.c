@@ -1,4 +1,5 @@
 #include "../include/cmd.h"
+#include "../include/crypto.h"
 
 int loginWindow(int serverFd) {
     int option, ret;
@@ -26,7 +27,7 @@ login:
         goto login;
     }
     printf("登录成功...\n");
-    sleep(2);
+    sleep(1);
     system("clear");
     printMenu();
     return 0;
@@ -79,6 +80,7 @@ int userLogin(int serverFd) {
 
 int userRegister(int serverFd) {
     Message_t msg;
+    int ret;
     char tmp[20] = {0}, *passwd;
     bzero(&msg, sizeof(Message_t));
     printf("请输入用户名(不超过20个字符):");
@@ -88,6 +90,9 @@ int userRegister(int serverFd) {
     strcat(msg.buf, passwd);
 
     printf("msg.buf=%s\n", msg.buf); 
+
+    //ret=rsa_generate_key()
+    
     //发送用户名和密码
     msg.flag = REGISTER;
     msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
@@ -115,5 +120,6 @@ void printMenu(){
     printf("mkdir <dir>:创建文件夹\n");
     printf("puts <file>:上传文件\n");
     printf("gets <file>:下载文件\n");
-    printf("help:       显示菜单\n\n");
+    printf("help:       显示菜单\n");
+    printf("exit:       退出\n\n");
 }

@@ -3,9 +3,9 @@
 int rsa_generate_key(const char* user_name)
 {
     int ret;
-    char pk_path[FILE_NAME_LEN];
+    char pk_path[100];
     sprintf(pk_path, "%s_rsa.key", user_name);
-    char cmd[FILE_NAME_LEN];
+    char cmd[100];
     sprintf(cmd, "openssl genrsa -out %s_rsa.key 2048", user_name);
     ret = access(pk_path, F_OK);
     if (ret)
@@ -80,7 +80,7 @@ char* rsa_sign(char* str, const char* user_name)
     char* en_str;
     FILE* fp;
 
-    char pk_path[FILE_NAME_LEN];
+    char pk_path[100];
     sprintf(pk_path, "%s_rsa.key", user_name);
     fp = fopen(pk_path, "rb");
     if (fp == NULL)
@@ -122,7 +122,7 @@ char* rsa_decrypt(char* str, const char* user_name)
     char* de_str;
     FILE* fp;
 
-    char pk_path[FILE_NAME_LEN];
+    char pk_path[100];
     sprintf(pk_path, "%s_rsa.key", user_name);
     fp = fopen(pk_path, "rb");
     if (fp == NULL)
