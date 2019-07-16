@@ -8,7 +8,7 @@ typedef struct {
     int dataLen;
     int flag;  // cmd_no
     char buf[1000];
-}DataPackage,*pDataPackage;
+}DataStream,*pDataStream;
 
 enum cmd_no {
     LOGIN,
@@ -26,8 +26,8 @@ enum cmd_no {
 enum return_flag { SUCCESS = 100, FAIL, NO_USER, NAME_EXIST, FILE_EXIST };
 
 char *genRandomStr(char *str, int len);
-int userLogin(int clientFd, MYSQL *db, pMessage_t pmsg);
-int userRegister(int clientFd, MYSQL *db, pMessage_t pmsg);
+int userLogin(int clientFd, MYSQL *db, pDataStream pmsg);
+int userRegister(int clientFd, MYSQL *db, pDataStream pmsg);
 int getUserInfo(char *buf, pUser_t puser);
-void sendErrMsg(int clientFd, pMessage_t pmsg);
+void sendErrMsg(int clientFd, pDataStream pmsg);
 #endif
