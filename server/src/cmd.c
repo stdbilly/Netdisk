@@ -3,7 +3,7 @@
 #define TOKEN_LEN 8
 #define SALT_lEN 8
 
-int userLogin(int clientFd, MYSQL *db, pDataPackage pData) {
+int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     User_t user;
     int ret;
     bzero(&user, sizeof(User_t));
@@ -53,7 +53,7 @@ int userLogin(int clientFd, MYSQL *db, pDataPackage pData) {
     return 0;
 }
 
-int userRegister(int clientFd, MYSQL *db, pDataPackage pData) {
+int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
     User_t user;
     int ret;
     bzero(&user, sizeof(User_t));
@@ -88,7 +88,7 @@ int userRegister(int clientFd, MYSQL *db, pDataPackage pData) {
     return 0;
 }
 
-void sendErrMsg(int clientFd, pDataPackage pData) {
+void sendErrMsg(int clientFd, pDataStream pData) {
     pData->flag = FAIL;
     pData->dataLen = MSGHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
