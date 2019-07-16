@@ -18,7 +18,8 @@ enum cmd_no {
     RM_CMD,
     PWD_CMD,
     PUTS_CMD,
-    GETS_CMD
+    GETS_CMD,
+    HELP
 };
 
 enum return_flag { SUCCESS = 100, FAIL, NO_USER, NAME_EXIST, FILE_EXIST };

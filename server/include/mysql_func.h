@@ -15,5 +15,7 @@ int connectDB(MYSQL **db);           //连接数据库
 int modifyDB(MYSQL *db, char *cmd);  //更新、插入、删除操作
 int queryDB(MYSQL *db, char *cmd);   //查询数据库
 int queryUser(MYSQL *db, char *cmd, pUser_t puser);
+MYSQL_RES* mysqlSelect(MYSQL* db,const char* table,const char* field,const char* condition);
+int insertUser(MYSQL* db,const char* name,const char* password);
 
 #endif

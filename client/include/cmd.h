@@ -18,7 +18,8 @@ enum CMD_NO{
     RM_CMD,
     PWD_CMD,
     PUTS_CMD,
-    GETS_CMD
+    GETS_CMD,
+    HELP
 };
 
 enum return_flag{
@@ -28,7 +29,10 @@ enum return_flag{
     NAME_EXIST,
     FILE_EXIST 
 };
+
 int loginWindow(int serverFd);
 int userLogin(int serverFd);
 int userRegister(int serverFd);
+void printMenu();
+
 #endif

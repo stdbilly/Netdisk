@@ -38,7 +38,6 @@ int main(int argc,char* argv[])
     if(ret){//退出
         threadPoolExit(&threadInfo);
     }
-    printf("______\n");
     while(1);
 
     while(1){

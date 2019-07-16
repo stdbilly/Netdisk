@@ -32,6 +32,10 @@
 #include <sys/uio.h>
 #include <sys/sendfile.h>
 #include <aio.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+
 #define ARGS_CHECK(argc,val) {if(argc!=val)  {printf("error args\n");return -1;}}
 #define ERROR_CHECK(ret,retVal,funcName) {if(ret==retVal) {perror(funcName);return -1;}}
 #define THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return -1;}}

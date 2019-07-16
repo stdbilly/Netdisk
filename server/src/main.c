@@ -8,6 +8,8 @@ void sigFunc(int sigNum) {
 
 int main(int argc, char* argv[]) {
     pipe(exitFds);
+    mkdir("keys", 0775);
+    mkdir("data", 0775);
     while (fork()) {
         signal(SIGUSR1, sigFunc);
         int status;

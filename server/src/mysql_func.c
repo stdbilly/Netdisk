@@ -93,3 +93,34 @@ int queryUser(MYSQL *db, char *cmd, pUser_t puser) {
     mysql_free_result(res);
     return 0;
 }
+
+MYSQL_RES*  mysqlSelect(MYSQL* db,const char* table,const char* field,const char* condition){
+    MYSQL_RES* res=NULL;
+    char query[300]={0};
+    sprintf(query,"SELECT * FROM %s WHERE %s = '%s'", table, field, condition);
+#ifdef DEBUG
+    printf("query:%s\n",query);
+#endif
+    int ret=mysql_query(db,query);
+    if(ret){
+        printf("error making query:%s\n",mysql_error(db));
+        return NULL;
+    }else{
+        res=mysql_store_result(db);
+        if(mysql_num_rows(res)==0){
+            printf("empty set\n");
+            mysql_free_result(res);
+            return NULL;
+        }
+        return res;
+    }
+}
+
+int insertUser(MYSQL* db,const char* name,const char* password){
+    int ret;
+    char query[300]={0};
+    sprintf(query,"INSERT INTO user(name,password) VALUES('%s','%s')",name,password);
+    ret=mysql_query(db,query);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    return 0;
+}

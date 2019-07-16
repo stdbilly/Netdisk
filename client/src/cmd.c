@@ -26,7 +26,9 @@ login:
         goto login;
     }
     printf("登录成功...\n");
-    sleep(3);
+    sleep(2);
+    system("clear");
+    printMenu();
     return 0;
 }
 
@@ -85,7 +87,7 @@ int userRegister(int serverFd) {
     passwd = getpass("请输入密码(不超过20个字符):");
     strcat(msg.buf, passwd);
 
-    printf("msg.buf=%s\n", msg.buf);
+    printf("msg.buf=%s\n", msg.buf); 
     //发送用户名和密码
     msg.flag = REGISTER;
     msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
@@ -102,4 +104,16 @@ int userRegister(int serverFd) {
         return -1;
     }
     return 0;
+}
+
+void printMenu(){
+    printf("请输入以下命令:\n\n");
+    printf("ls:         列出文件\n");
+    printf("cd <path>:  改变工作路径\n");
+    printf("pwd:        显示当前工作路径\n");
+    printf("rm <file>:  删除文件\n");
+    printf("mkdir <dir>:创建文件夹\n");
+    printf("puts <file>:上传文件\n");
+    printf("gets <file>:下载文件\n");
+    printf("help:       显示菜单\n\n");
 }
