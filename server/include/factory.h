@@ -22,4 +22,9 @@ int recv_file(int clientFd);
 int recvCycle(int sfd, void *buf, int recvLen);
 int send_cycle(int sfd, const char* data, int send_len);
 
+
+int sendRanStr(int fd, pDataStream data, const char* user_name);
+int recvRanStr(int sfd, pDataStream pData);
+int recvPubKey(int clientFd,char* username);
+
 #endif

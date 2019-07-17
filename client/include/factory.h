@@ -1,6 +1,7 @@
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
 #include "work_que.h"
+#include "cmd.h"
 
 #define CLIENT_CONF "../conf/client.conf"//客户端配置文件
 
@@ -20,8 +21,11 @@ int threadPoolExit(pFactory_t pf);
 
 
 int recvCycle(int sfd,void* buf,int recvLen);
-int putsFile(int serverFd);
+int putsFile(int serverFd,char* filePath);
 int getsFile(int serverFd);
+
+
 int sendRanStr(int fd, pDataStream pData);
 int recvRanStr(int fd, pDataStream pData, const char* user_name);
+int sendPubKey(int serverFd,char* username);
 #endif

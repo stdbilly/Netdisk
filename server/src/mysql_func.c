@@ -77,7 +77,6 @@ int queryUser(MYSQL *db, char *cmd, pUser_t puser) {
     if (res) {
         if ((row = mysql_fetch_row(res)) != NULL) {
             strcpy(puser->name, row[1]);
-            strcpy(puser->salt, row[2]);
             strcpy(puser->password, row[3]);
             printf("queryUser success\n");
         } else {  //没有查询到数据

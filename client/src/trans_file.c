@@ -1,5 +1,8 @@
+#define _GNU_SOURCE
 #include "../include/cmd.h"
 #include "../include/crypto.h"
+
+#define DEBUG
 
 #define FILENAME "../pData/44.day10-项目讲解.avi"
 
@@ -8,10 +11,10 @@ typedef struct {
     char buf[1000];
 } fileInfo_t;
 
-int putsFile(int serverFd) {
+int putsFile(int serverFd,char* filePath) {
     fileInfo_t file;
     int ret;
-    file.pDataLen = strlen(FILENAME);
+    file.pDataLen = strlen(filePath);
     strcpy(file.buf, FILENAME);
     send(serverFd, &file, 4 + file.pDataLen, 0);  //发送文件名
     int fd = open(FILENAME, O_RDWR);
@@ -113,9 +116,37 @@ int recvRanStr(int sfd, pDataStream pData, const char* user_name) {
     RanStr_tmp = NULL;
     pData->dataLen = strlen(pData->buf)+DATAHEAD_LEN;
     #ifdef DEBUG
-    printf("bufLen=%d\n",strlen(pData->buf));
+    printf("bufLen=%ld\n",strlen(pData->buf));
     #endif
     send(sfd, pData, pData->dataLen ,0); 
+    return 0;
+}
+
+int sendPubKey(int serverFd,char* username) {
+    DataStream data;
+    int ret;
+    char pkPath[100];
+    sprintf(pkPath,"%s_rsa_pub.key",username);
+    int pkfd = open(pkPath, O_RDONLY);
+    ERROR_CHECK(pkfd,-1,"open");
+    
+    int fd = open(pkPath, O_RDONLY);
+     ERROR_CHECK(fd,-1,"open");
+    struct stat buf;
+    fstat(fd, &buf);  //获取文件大小
+    data.dataLen = sizeof(buf.st_size);
+    memcpy(data.buf, &buf.st_size, data.dataLen);
+    send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
+    //发送文件内容
+    ret = sendfile(serverFd, fd, NULL, buf.st_size);
+    #ifdef DEBUG
+    printf("sendflie ret=%d\n", ret);
+    #endif
+    ERROR_CHECK(ret, -1, "sendflie");
+#ifdef DEBUG
+    printf("sendPubKey success\n");
+#endif    
+    close(fd);
     return 0;
 }
 

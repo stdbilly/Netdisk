@@ -24,7 +24,7 @@ int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     }
 
     //发送salt给客户端
-    strcpy(pData->buf, user.salt);
+    //strcpy(pData->buf, user.salt);
     pData->flag = SUCCESS;
     pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
@@ -80,32 +80,43 @@ int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
             send(clientFd, pData, DATAHEAD_LEN, 0);
         }
     }
-//------------------------------------------------
 
-    char str[20] = {0};
-    //生成salt和密文
-    strcpy(user.salt, "$6$");
-    strcat(user.salt, genRandomStr(str, SALT_lEN));
-    printf("salt=%s,len=%ld\n", user.salt, strlen(user.salt));
-    strcpy(user.password, crypt(user.password, user.salt));
-    printf("passwd=%s,len=%ld\n", user.password, strlen(user.password));
-    //将用户信息保存到数据库
-    char insertCMD[300] = {0};
-    char temp[50] = "INSERT INTO user(name, salt, password) values(";
-    sprintf(insertCMD, "%s'%s','%s','%s')", temp, user.name, user.salt,
-            user.password);
-    ret = modifyDB(db, insertCMD);
-    if (ret == -1) {
-        strcpy(pData->buf, "用户名已存在！请重新输入");
-        sendErrMsg(clientFd, pData);
-        return -1;
+    recvRanStr(clientFd, pData);  //接收随机字符串
+
+    //接收用户的公钥
+    recvPubKey(clientFd, user.name);
+
+    //接收用户加密后的密码
+    recvCycle(clientFd, pData, DATAHEAD_LEN);
+    recvCycle(clientFd, pData->buf, pData->dataLen);
+
+    //解密
+    char *de_pass = rsa_decrypt(pData->buf);
+#ifdef DEBUG
+    printf("password=%s\n", de_pass);
+#endif
+    //再次加密
+    unsigned char md[SHA512_DIGEST_LENGTH];  // encrypt password
+    SHA512((unsigned char *)de_pass, strlen(de_pass), md);
+    char password[SHA512_DIGEST_LENGTH * 2 + 1] = {0};
+    char tmp[3] = {0};
+    for (int k = 0; k < SHA512_DIGEST_LENGTH; k++) {
+        sprintf(tmp, "%02x", md[k]);
+        strcat(password, tmp);
     }
 
-    strcpy(temp, "SELECT * FROM user");
-    queryDB(db, temp);
+    ret = insertUser(db, user.name, password);
+    if (ret == -1) {
+        pData->flag=FAIL;
+        printf("插入user失败\n");
+    } else if (ret == 0) {
+#ifdef _DEBUG
+        printf("user created\n");
+#endif
+        pData->flag=SUCCESS;
+    }
 
-    pData->flag = SUCCESS;
-    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
+    //发送flag
     send(clientFd, pData, pData->dataLen, 0);
     return 0;
 }

@@ -7,7 +7,7 @@
 typedef struct user {
     int id;
     char name[20];
-    char password[100];
+    char password[300];
 } User_t, *pUser_t;
 
 int connectDB(MYSQL **db);           //连接数据库

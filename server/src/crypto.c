@@ -1,4 +1,5 @@
 #include "crypto.h"
+#define DEBUG
 
 char* rsa_encrypt(char* str, const char* user_name)
 {
@@ -61,7 +62,6 @@ char* rsa_sign(char* str)
     }
 
     RSA* rsa;
-
     rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
     if (rsa == NULL)
     {

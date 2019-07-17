@@ -1,5 +1,6 @@
-#include "../include/factory.h"
 #include "../include/cmd.h"
+#include "../include/crypto.h"
+#include "../include/factory.h"
 
 #define FILENAME "44.day10-项目讲解.avi"
 
@@ -69,58 +70,83 @@ int recv_file(int clientFd) {
     return 0;
 }
 
-int send_nonce(int fd, DataPackage* data, const char* user_name) {
-    char nonce[15];
+int sendRanStr(int sfd, pDataStream data, const char* user_name) {
+    char RanStr[15];
     srand((unsigned)(time(NULL)));
-    sprintf(nonce, "%d", rand());
-    strcpy(data->buf, nonce);
+    sprintf(RanStr, "%d", rand());
+    strcpy(data->buf, RanStr);
     data->dataLen = strlen(data->buf) + 1;
-    if (send_cycle(fd, (char*)data, data->dataLen + sizeof(int))) {
+    if (send_cycle(sfd, (char*)data, data->dataLen + sizeof(int))) {
         return -1;
     }
-    if (recv_cycle(fd, (char*)&data->dataLen, sizeof(int))) {
+    if (recv_cycle(sfd, (char*)&data->dataLen, sizeof(int))) {
         return -1;
     }
-    if (recv_cycle(fd, data->buf, data->dataLen)) {
+    if (recv_cycle(sfd, data->buf, data->dataLen)) {
         return -1;
     }
-    char* nonce_tmp;
-    nonce_tmp = rsa_verify(data->buf, user_name);
-    if (nonce_tmp == NULL) {
+    char* RanStr_tmp;
+    RanStr_tmp = rsa_verify(data->buf, user_name);
+    if (RanStr_tmp == NULL) {
         return -1;
     }
-    if (strcmp(nonce_tmp, nonce) != 0) {
-        free(nonce_tmp);
-        nonce_tmp = NULL;
-        printf("nonce verification failed\n");
+    if (strcmp(RanStr_tmp, RanStr) != 0) {
+        free(RanStr_tmp);
+        RanStr_tmp = NULL;
+        printf("RanStr verification failed\n");
         return -1;
     }
-    free(nonce_tmp);
-    nonce_tmp = NULL;
+    free(RanStr_tmp);
+    RanStr_tmp = NULL;
     return 0;
 }
 
-int recv_nonce(int fd, DataPackage* data) {
-    if (recv_cycle(fd, (char*)&data->dataLen, sizeof(int)))  // get nonce
-    {
+int recvRanStr(int sfd, pDataStream pData) {
+    char* RanStr_tmp;
+    recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
+    recvCycle(sfd, pData->buf, pData->dataLen);
+
+    RanStr_tmp = rsa_sign(pData->buf);
+    if (RanStr_tmp == NULL) {
         return -1;
     }
-    if (recv_cycle(fd, data->buf, data->dataLen)) {
-        return -1;
+    memcpy(pData->buf, RanStr_tmp, SER_EN_LEN);  // sign
+    free(RanStr_tmp);
+    RanStr_tmp = NULL;
+    pData->dataLen = strlen(pData->buf) + DATAHEAD_LEN;
+#ifdef DEBUG
+    printf("bufLen=%d\n", strlen(pData->buf));
+#endif
+    send(sfd, pData, pData->dataLen, 0);
+    return 0;
+}
+
+int recvPubKey(int clientFd,char* username) {
+    int fd,ret;
+    DataStream data;
+    char pkPath[100];
+    sprintf(pkPath, "keys/%s_%s.key", username, "pub");
+    fd = open(pkPath, O_TRUNC|O_CREAT|O_RDWR, 0660);
+    ERROR_CHECK(fd, -1, "open");
+    //接收文件大小
+    off_t fileSize, download = 0;
+    recvCycle(clientFd, &data, DATAHEAD_LEN);
+    recvCycle(clientFd, &fileSize, data.dataLen);
+    int fds[2];
+    pipe(fds);
+
+    while (download < fileSize) {
+        ret = splice(clientFd, NULL, fds[1], NULL, 65536,
+                     SPLICE_F_MOVE | SPLICE_F_MORE);
+        if (ret == 0) {
+            break;
+        }
+        ERROR_CHECK(ret, -1, "splice");
+        splice(fds[0], NULL, fd, NULL, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
+        download += ret;
     }
-    char* nonce_tmp;
-    nonce_tmp = rsa_sign(data->buf);
-    if (nonce_tmp == NULL) {
-        return -1;
-    }
-    memcpy(data->buf, nonce_tmp, SER_EN_LEN);  // sign
-    free(nonce_tmp);
-    nonce_tmp = NULL;
-    data->dataLen = SER_EN_LEN;
-    if (send_cycle(fd, (char*)data, data->dataLen + sizeof(int)))  // send back
-    {
-        return -1;
-    }
+    printf("recvPubKey success\n");
+    close(fd);
     return 0;
 }
 

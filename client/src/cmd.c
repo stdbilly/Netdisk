@@ -98,7 +98,8 @@ int userRegister(int serverFd) {
 #ifdef DEBUG
         printf("buflen=%d\n", strlen(data.buf));
 #endif
-        send(serverFd, &data, data.dataLen, 0);  //发送用户名，服务端查询用户名是否已存在
+        send(serverFd, &data, data.dataLen,
+             0);  //发送用户名，服务端查询用户名是否已存在
 
         recvCycle(serverFd, &data, DATAHEAD_LEN);  //接收flag
         if (data.flag == USER_EXIST) {
@@ -109,28 +110,51 @@ int userRegister(int serverFd) {
     }
 
     passwd = getpass("请输入密码(不超过20个字符):");
-    ret = rsa_generate_key(name);
+    ret = rsa_generate_key(name);  //生成用户的公钥和私钥
     if (ret) {
         return -1;
     }
 
-    ret=sendRanStr(serverFd,&data);
+    ret = sendRanStr(serverFd, &data);  //发送随机字符串
     printf("data.buf=%s\n", data.buf);
-//-------------------------------------------
 
-    //发送用户名和密码
-    data.flag = REGISTER;
-    data.dataLen = strlen(data.buf) + DATAHEAD_LEN;
-    send(serverFd, &data, data.dataLen, 0);
+    //发送用户的公钥
+    sendPubKey(serverFd, name);
+
+    //用server的公钥加密密码，并发送给server
+    char *en_pass = rsa_encrypt(passwd);
+    free(passwd);
+    passwd = NULL;
+    if (en_pass == NULL) {
+        printf("password encrypt failed\n");
+        return -1;
+    }
+    memcpy(data.buf, en_pass, SER_EN_LEN);
+    free(en_pass);
+    en_pass = NULL;
+    data.dataLen = strlen(data.buf);
+    printf("data.dataLen=%d,SER_EN_LEN=%s\n", strlen(data.buf), SER_EN_LEN);
+    send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
 
     //接收返回信息
     recvCycle(serverFd, &data, DATAHEAD_LEN);
-    recvCycle(serverFd, data.buf, data.dataLen - DATAHEAD_LEN);
 
     if (data.flag == SUCCESS) {
         printf("注册成功\n");
     } else {
-        printf("error:%s\n", data.buf);
+        printf("注册失败\n");
+        // delete key file
+        char pk_path[100];
+        sprintf(pk_path, "%s_rsa.key", name);
+        ret = access(pk_path, F_OK);
+        if (ret == 0) {
+            remove(pk_path);
+        }
+        sprintf(pk_path, "%s_rsa_pub.key", name);
+        ret = access(pk_path, F_OK);
+        if (ret == 0) {
+            remove(pk_path);
+        }
         return -1;
     }
     return 0;
