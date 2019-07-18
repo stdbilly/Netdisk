@@ -4,7 +4,7 @@
 #include "cmd.h"
 #include "crypto.h"
 
-#define CLIENT_CONF "../conf/client.conf"//客户端配置文件
+#define CLIENT_CONF "conf/client.conf"//客户端配置文件
 
 typedef struct{
     Que_t que;

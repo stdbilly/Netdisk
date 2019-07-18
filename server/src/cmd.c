@@ -1,10 +1,12 @@
 #include "../include/cmd.h"
+#include "../include/factory.h"
+#include "../include/crypto.h"
 
 #define TOKEN_LEN 8
 #define SALT_lEN 8
 #define DEBUG
 
-int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
+int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
     User_t user;
     int ret;
     bzero(&user, sizeof(User_t));
@@ -55,12 +57,12 @@ int userLogin(int clientFd, MYSQL *db, pDataStream pData) {
     return 0;
 }
 
-int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
+int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
     User_t user;
     int ret;
     while (pData->flag == REGISTER || pData->flag == USER_EXIST) {
         bzero(&user, sizeof(User_t));
-        bzero(pData, sizeof(DataStream));
+        bzero(pData, sizeof(DataStream_t));
         recvCycle(clientFd, pData, DATAHEAD_LEN);
         recvCycle(clientFd, pData->buf,pData->dataLen );  //接收用户名
         strcpy(user.name, pData->buf);
@@ -120,7 +122,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
     return 0;
 }
 
-void sendErrMsg(int clientFd, pDataStream pData) {
+void sendErrMsg(int clientFd, pDataStream_t pData) {
     pData->flag = FAIL;
     pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);

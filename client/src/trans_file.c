@@ -1,5 +1,6 @@
 #include "../include/cmd.h"
 #include "../include/crypto.h"
+#include "../include/factory.h"
 
 #define DEBUG
 

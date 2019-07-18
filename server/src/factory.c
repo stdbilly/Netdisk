@@ -1,4 +1,7 @@
 #include "../include/cmd.h"
+#include "../include/factory.h"
+
+#define DEBUG
 
 void cleanUp(void *p) {
     pthread_mutex_unlock((pthread_mutex_t *)p);
@@ -9,7 +12,7 @@ void *threadFunc(void *p) {
     pQue_t pq = &pthreadInfo->que;
     pNode_t pGet;
     int getTaskSuccess, ret;
-    DataStream data;
+    DataStream_t data;
     while (1) {
         pthread_mutex_lock(&pq->mutex);
         pthread_cleanup_push(cleanUp, &pq->mutex);
@@ -75,7 +78,14 @@ int factoryInit(int *sfd, pFactory_t p) {
     char ip[20] = {0};
     FILE *config;
     config = fopen(SERVER_CONF, "r");
+    if(config==NULL){
+        perror("fopen");
+        return -1;
+    }
     fscanf(config, "%s %d %d %d", ip, &port, &threadNum, &capacity);
+#ifdef DEBUG
+    printf("threadNum=%d\n",threadNum);
+#endif
 
     queInit(&p->que, capacity);
     pthread_cond_init(&p->cond, NULL);

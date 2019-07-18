@@ -1,7 +1,6 @@
 #ifndef __CMD_H__
 #define __CMD_H__
-#include "factory.h"
-#include "crypto.h"
+#include "head.h"
 
 #define DATAHEAD_LEN 8 
 

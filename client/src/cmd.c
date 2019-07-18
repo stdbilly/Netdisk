@@ -1,7 +1,8 @@
 #include "../include/cmd.h"
+#include "../include/factory.h"
 #include "../include/crypto.h"
 
-#define DEBUG ;
+#define DEBUG 
 
 int loginWindow(int serverFd) {
     int option, ret;
@@ -36,12 +37,12 @@ login:
 }
 
 int userLogin(int serverFd) {
-    DataStream data;
+    DataStream_t data;
     data.flag = LOGIN;
     send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
 
-    char tmp[20] = {0};
-    bzero(&data, sizeof(DataStream));
+    //char tmp[20] = {0};
+    bzero(&data, sizeof(DataStream_t));
     printf("请输入用户名:");
     scanf("%s", data.buf);
     data.dataLen = strlen(data.buf) + DATAHEAD_LEN;
@@ -82,10 +83,10 @@ int userLogin(int serverFd) {
 }
 
 int userRegister(int serverFd) {
-    DataStream data;
+    DataStream_t data;
     int ret;
     char name[NAME_LEN + 1] = {0}, *passwd;
-    bzero(&data, sizeof(DataStream));
+    bzero(&data, sizeof(DataStream_t));
     data.flag = REGISTER;
     send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
 
@@ -96,7 +97,7 @@ int userRegister(int serverFd) {
         data.dataLen =  strlen(data.buf);
 
 #ifdef DEBUG
-        printf("buflen=%d\n", strlen(data.buf));
+        printf("buflen=%ld\n", strlen(data.buf));
 #endif
         send(serverFd, &data, DATAHEAD_LEN +data.dataLen,
              0);  //发送用户名，服务端查询用户名是否已存在
@@ -133,7 +134,7 @@ int userRegister(int serverFd) {
     free(en_pass);
     en_pass = NULL;
     data.dataLen = strlen(data.buf);
-    printf("data.dataLen=%d,SER_EN_LEN=%s\n", strlen(data.buf), SER_EN_LEN);
+    printf("data.dataLen=%ld,SER_EN_LEN=%d\n", strlen(data.buf), SER_EN_LEN);
     send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
 
     //接收返回信息

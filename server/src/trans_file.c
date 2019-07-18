@@ -70,7 +70,7 @@ int recv_file(int clientFd) {
     return 0;
 }
 
-int sendRanStr(int sfd, pDataStream data, const char* user_name) {
+/* int sendRanStr(int sfd, pDataStream_t data, const char* user_name) {
     char RanStr[15];
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
@@ -99,9 +99,9 @@ int sendRanStr(int sfd, pDataStream data, const char* user_name) {
     free(RanStr_tmp);
     RanStr_tmp = NULL;
     return 0;
-}
+} */
 
-int recvRanStr(int sfd, pDataStream pData) {
+int recvRanStr(int sfd, pDataStream_t pData) {
     char* RanStr_tmp;
     recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
     recvCycle(sfd, pData->buf, pData->dataLen);
@@ -115,7 +115,7 @@ int recvRanStr(int sfd, pDataStream pData) {
     RanStr_tmp = NULL;
     pData->dataLen = strlen(pData->buf) ;
 #ifdef DEBUG
-    printf("bufLen=%d\n", strlen(pData->buf));
+    printf("bufLen=%ld\n", strlen(pData->buf));
 #endif
     send(sfd, pData, pData->dataLen+ DATAHEAD_LEN, 0);
     return 0;
@@ -123,7 +123,7 @@ int recvRanStr(int sfd, pDataStream pData) {
 
 int recvPubKey(int clientFd,char* username) {
     int fd,ret;
-    DataStream data;
+    DataStream_t data;
     char pkPath[100];
     sprintf(pkPath, "keys/%s_%s.key", username, "pub");
     fd = open(pkPath, O_TRUNC|O_CREAT|O_RDWR, 0660);
