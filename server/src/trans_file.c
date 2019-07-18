@@ -71,23 +71,23 @@ int recv_file(int clientFd) {
     return 0;
 }
 
-/* int sendRanStr(int sfd, pDataStream_t data, const char* user_name) {
+int sendRanStr(int sfd, pDataStream_t pData, const char* user_name) {
     char RanStr[15];
+    int ret;
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
-    strcpy(data->buf, RanStr);
-    data->dataLen = strlen(data->buf) + 1;
-    if (send_cycle(sfd, (char*)data, data->dataLen + sizeof(int))) {
-        return -1;
-    }
-    if (recv_cycle(sfd, (char*)&data->dataLen, sizeof(int))) {
-        return -1;
-    }
-    if (recv_cycle(sfd, data->buf, data->dataLen)) {
-        return -1;
-    }
+    strcpy(pData->buf, RanStr);
+    pData->dataLen = strlen(pData->buf) + 1;
+    ret=send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
+#ifdef DEBUG
+    printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf),ret);
+#endif
+    recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
+    
+    recvCycle(sfd, pData->buf, pData->dataLen);
+     
     char* RanStr_tmp;
-    RanStr_tmp = rsa_verify(data->buf, user_name);
+    RanStr_tmp = rsa_verify(pData->buf, user_name);//私钥解密
     if (RanStr_tmp == NULL) {
         return -1;
     }
@@ -100,7 +100,7 @@ int recv_file(int clientFd) {
     free(RanStr_tmp);
     RanStr_tmp = NULL;
     return 0;
-} */
+}
 
 int recvRanStr(int sfd, pDataStream_t pData) {
     char* RanStr_tmp;

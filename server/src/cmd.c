@@ -8,52 +8,73 @@
 
 int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
     User_t user;
+    char name[21] = {0};
     int ret;
     bzero(&user, sizeof(User_t));
-    strcpy(user.name, pData->buf);
-    //根据用户名检索user表，得到salt和密文
-    char cmd[300] = "SELECT * FROM user WHERE name=";
-    sprintf(cmd, "%s'%s'", cmd, user.name);
+    recvCycle(clientFd, pData, DATAHEAD_LEN);             //接收flag
+    if (pData->flag == NOPASS_LOGIN) {                    //无密码登录
+        recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
+        strcpy(name, pData->buf);
 
-    printf("username=%s\n", user.name);
-    ret = queryUser(db, cmd, &user);
-    if (ret == -1) {
-        pData->flag = NO_USER;
-        strcpy(pData->buf, "此用户未注册！");
-        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
-        send(clientFd, pData, pData->dataLen, 0);
-        return -1;
-    }
+        ret = recvRanStr(clientFd, pData);
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            pData->flag = FAIL;
+            send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+            return -1;
+        }
+        ret = sendRanStr(clientFd, pData, name);
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            pData->flag = FAIL;
+            send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+            return -1;
+        }
 
-    //发送salt给客户端
-    // strcpy(pData->buf, user.salt);
-    pData->flag = SUCCESS;
-    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
-    send(clientFd, pData, pData->dataLen, 0);
-    //接收用户发来的密文
-    recvCycle(clientFd, pData, DATAHEAD_LEN);
-    recvCycle(clientFd, pData->buf, pData->dataLen - DATAHEAD_LEN);
-    //比对用户发来的密文
-    if (!strcmp(pData->buf, user.password)) {
-        //密码正确，生成token，发送给客户端，存入数据库
-        char token[TOKEN_LEN] = {0};
-        strcpy(pData->buf, genRandomStr(token, TOKEN_LEN));
+        printf("user_verified\n");
         pData->flag = SUCCESS;
-        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
-        send(clientFd, pData, pData->dataLen, 0);
+        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+        return 0;
+    } else {                                              //密码登录
+        recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
+        strcpy(name, pData->buf);
 
-        char cmd[200] = "UPDATE user SET token=";
-        sprintf(cmd, "%s'%s' %s'%s'", cmd, pData->buf,
-                "where name=", user.name);
-        modifyDB(db, cmd);
-        printf("login success\n");
-    } else {
-        pData->flag = FAIL;
-        strcpy(pData->buf, "密码错误！请重新输入");
-        pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
-        send(clientFd, pData, pData->dataLen, 0);
-        return -1;
+        recvRanStr(clientFd, pData);  //接收随机字符串
+
+        //接收用户加密后的密码
+        recvCycle(clientFd, pData, DATAHEAD_LEN);
+#ifdef DEBUG
+        printf("dataLen=%d\n", pData->dataLen);
+#endif
+        recvCycle(clientFd, pData->buf, pData->dataLen);
+
+        //解密
+        char *de_pass = rsa_decrypt(pData->buf);
+        if (de_pass == NULL) {
+            printf("decrypt password fail\n");
+            pData->flag = FAIL;
+            send(clientFd, pData, DATAHEAD_LEN, 0);
+            return -1;
+        }
+#ifdef DEBUG
+        printf("username: %s\n", name);
+        printf("password=%s\n", de_pass);
+#endif
+
+        ret = userVerify(db, name, de_pass);
+        free(de_pass);
+        de_pass = NULL;
+        if (ret == -1) {
+            pData->flag = FAIL;
+            send(clientFd, pData, DATAHEAD_LEN, 0);
+            return -1;
+        } else {
+            pData->flag = SUCCESS;
+            send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+            return 0;
+        }
     }
+
     return 0;
 }
 
@@ -98,8 +119,8 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
     char *de_pass = rsa_decrypt(pData->buf);
     if (de_pass == NULL) {
         printf("decrypt password fail\n");
-        pData->flag=FAIL;
-        send(clientFd,pData,DATAHEAD_LEN,0);
+        pData->flag = FAIL;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
         return -1;
     }
 #ifdef DEBUG

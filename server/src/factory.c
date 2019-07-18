@@ -1,5 +1,5 @@
-#include "../include/cmd.h"
 #include "../include/factory.h"
+#include "../include/cmd.h"
 
 #define DEBUG
 
@@ -27,17 +27,25 @@ void *threadFunc(void *p) {
             while (1) {
                 //接收客户端请求
                 bzero(&data, sizeof(data));
-                ret = recvCycle(pGet->clientFd, &data, DATAHEAD_LEN);  //接收flag
+                ret =
+                    recvCycle(pGet->clientFd, &data, DATAHEAD_LEN);  //接收flag
                 if (ret == -1) {
                     goto DISCONNECT;
                 }
 
                 switch (data.flag) {
                     case LOGIN:
-                        userLogin(pGet->clientFd, db, &data);
+                        ret = userLogin(pGet->clientFd, db, &data);
+                        if (ret == -1) {
+                            goto DISCONNECT;
+                        }
                         break;
                     case REGISTER:
-                        userRegister(pGet->clientFd, db, &data);
+                        ret = userRegister(pGet->clientFd, db, &data);
+                        if (ret == -1) {
+                            goto DISCONNECT;
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -78,7 +86,7 @@ int factoryInit(int *sfd, pFactory_t p) {
     char ip[20] = {0};
     FILE *config;
     config = fopen(SERVER_CONF, "r");
-    if(config==NULL){
+    if (config == NULL) {
         perror("fopen");
         return -1;
     }

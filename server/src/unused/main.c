@@ -433,7 +433,7 @@ int main(int argc, char** argv)
                             close(new_fd);
                             continue;
                         }
-                        if (strcmp(data.buf, "cc27") == 0)
+                        if (strcmp(data.buf, "cc27") != 0)
                         {
                             data.data_len = 0;
                         }

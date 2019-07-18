@@ -84,7 +84,6 @@ int sendRanStr(int sfd, pDataStream_t pData) {
     ret=send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
 #ifdef DEBUG
     printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf),ret);
-
 #endif
     recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
     
@@ -111,18 +110,18 @@ int recvRanStr(int sfd, pDataStream_t pData, const char* user_name) {
     recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
     recvCycle(sfd, pData->buf, pData->dataLen);
     
-    RanStr_tmp = rsa_sign(pData->buf, user_name);
+    RanStr_tmp = rsa_sign(pData->buf, user_name);//私钥加密
     if (RanStr_tmp == NULL) {
         return -1;
     }
     memcpy(pData->buf, RanStr_tmp, RSA_EN_LEN);
     free(RanStr_tmp);
     RanStr_tmp = NULL;
-    pData->dataLen = strlen(pData->buf)+DATAHEAD_LEN;
+    pData->dataLen = RSA_EN_LEN;
     #ifdef DEBUG
     printf("bufLen=%ld\n",strlen(pData->buf));
     #endif
-    send(sfd, pData, pData->dataLen ,0); 
+    send(sfd, pData, pData->dataLen+DATAHEAD_LEN ,0); 
     return 0;
 }
 

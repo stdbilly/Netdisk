@@ -1,11 +1,13 @@
 #include "../include/mysql_func.h"
 
-int connectDB(MYSQL **db) {
+#define DEBUG
+
+int connectDB(MYSQL** db) {
     char server[10] = {0};
     char user[10] = {0};
     char password[10] = {0};
     char database[15] = {0};
-    FILE *config;
+    FILE* config;
     config = fopen(MYSQL_CONF, "r");
     if (!config) {
         perror("fopen");
@@ -23,7 +25,40 @@ int connectDB(MYSQL **db) {
     return 0;
 }
 
-int modifyDB(MYSQL *db, char *cmd) {
+int userVerify(MYSQL* db, const char* user_name, const char* password) {
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    res = selectDB(db, "user", "name", user_name);
+    if (res == NULL) {
+#ifdef DEBUG
+        printf("cannot find user %s\n", user_name);
+#endif
+        return -1;
+    }
+    mysql_free_result(res);
+    row = mysql_fetch_row(res);
+    unsigned char md[SHA512_DIGEST_LENGTH];
+    SHA512((unsigned char*)password, strlen(password), md);
+    char sha_password[SHA512_DIGEST_LENGTH * 2 + 1] = {0};
+    char tmp[3] = {0};
+    for (int i = 0; i < SHA512_DIGEST_LENGTH; i++) {
+        sprintf(tmp, "%02x", md[i]);
+        strcat(sha_password, tmp);
+    }
+    if (strcmp(sha_password, row[2]) == 0) {
+#ifdef DEBUG
+        printf("verification success\n");
+#endif
+        return 0;
+    } else {
+#ifdef DEBUG
+        printf("verification failed\n");
+#endif
+        return -1;
+    }
+}
+
+int modifyDB(MYSQL* db, char* cmd) {
     int ret;
     ret = mysql_query(db, cmd);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
@@ -31,9 +66,9 @@ int modifyDB(MYSQL *db, char *cmd) {
     return 0;
 }
 
-int queryDB(MYSQL *db, char *cmd) {
+int queryDB(MYSQL* db, char* cmd) {
     int ret, i, fieldsNum;
-    MYSQL_RES *res;
+    MYSQL_RES* res;
     MYSQL_ROW row;
     ret = mysql_query(db, cmd);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
@@ -66,9 +101,9 @@ int queryDB(MYSQL *db, char *cmd) {
     return 0;
 }
 
-int queryUser(MYSQL *db, char *cmd, pUser_t puser) {
+int queryUser(MYSQL* db, char* cmd, pUser_t puser) {
     int ret;
-    MYSQL_RES *res;
+    MYSQL_RES* res;
     MYSQL_ROW row;
     ret = mysql_query(db, cmd);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
@@ -93,20 +128,21 @@ int queryUser(MYSQL *db, char *cmd, pUser_t puser) {
     return 0;
 }
 
-MYSQL_RES*  selectDB(MYSQL* db,const char* table,const char* field,const char* condition){
-    MYSQL_RES* res=NULL;
-    char query[300]={0};
-    sprintf(query,"SELECT * FROM %s WHERE %s = '%s'", table, field, condition);
+MYSQL_RES* selectDB(MYSQL* db, const char* table, const char* field,
+                    const char* condition) {
+    MYSQL_RES* res = NULL;
+    char query[300] = {0};
+    sprintf(query, "SELECT * FROM %s WHERE %s = '%s'", table, field, condition);
 #ifdef DEBUG
-    printf("query:%s\n",query);
+    printf("query:%s\n", query);
 #endif
-    int ret=mysql_query(db,query);
-    if(ret){
-        printf("error making query:%s\n",mysql_error(db));
+    int ret = mysql_query(db, query);
+    if (ret) {
+        printf("error making query:%s\n", mysql_error(db));
         return NULL;
-    }else{
-        res=mysql_store_result(db);
-        if(mysql_num_rows(res)==0){
+    } else {
+        res = mysql_store_result(db);
+        if (mysql_num_rows(res) == 0) {
             printf("empty set\n");
             mysql_free_result(res);
             return NULL;
@@ -115,11 +151,12 @@ MYSQL_RES*  selectDB(MYSQL* db,const char* table,const char* field,const char* c
     }
 }
 
-int insertUser(MYSQL* db,const char* name,const char* password){
+int insertUser(MYSQL* db, const char* name, const char* password) {
     int ret;
-    char query[300]={0};
-    sprintf(query,"INSERT INTO user(name,password) VALUES('%s','%s')",name,password);
-    ret=mysql_query(db,query);
-    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    char query[300] = {0};
+    sprintf(query, "INSERT INTO user(name,password) VALUES('%s','%s')", name,
+            password);
+    ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     return 0;
 }

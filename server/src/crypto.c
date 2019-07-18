@@ -143,7 +143,7 @@ char* rsa_verify(char* str, const char* user_name)
     char* de_str;
 
     char pk_path[RESULT_LEN];
-    sprintf(pk_path, "keys/%s_%s.key", user_name, "pub");
+    sprintf(pk_path, "keys/%s_pub.key", user_name);
     FILE* fp = fopen(pk_path, "rb");
     if (fp == NULL)
     {

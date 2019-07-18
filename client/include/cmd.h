@@ -12,6 +12,7 @@ typedef struct {
 
 enum CMD_NO{
     LOGIN,
+    NOPASS_LOGIN,
     REGISTER,
     LS_CMD,
     CD_CMD,
