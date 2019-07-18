@@ -1,5 +1,7 @@
 #include "transmission.h"
 
+
+
 int send_cycle(int fd, const char* data, int send_len)
 {
     int total = 0;

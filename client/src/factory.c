@@ -18,7 +18,7 @@ void* threadFunc(void *p) {
         getTaskSuccess=queGet(pq,&pGet);//拿任务
         pthread_cleanup_pop(1);
         if(!getTaskSuccess){
-            putsFile(pGet->serverFd);
+            //putsFile(pGet->serverFd);
             close(pGet->serverFd);
             free(pGet);
         }

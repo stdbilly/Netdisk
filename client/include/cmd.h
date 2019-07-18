@@ -1,6 +1,7 @@
 #ifndef __CMD_H__
 #define __CMD_H__
 #include "factory.h"
+#include "crypto.h"
 
 #define DATAHEAD_LEN 8 
 
@@ -8,7 +9,7 @@ typedef struct {
     int dataLen;
     int flag;//cmd_no
     char buf[1000];
-}DataStream,*pDataStream;
+}DataStream_t,*pDataStream_t;
 
 enum CMD_NO{
     LOGIN,

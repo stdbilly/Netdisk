@@ -62,8 +62,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
         bzero(&user, sizeof(User_t));
         bzero(pData, sizeof(DataStream));
         recvCycle(clientFd, pData, DATAHEAD_LEN);
-        recvCycle(clientFd, pData->buf,
-                  pData->dataLen - DATAHEAD_LEN);  //接收用户名
+        recvCycle(clientFd, pData->buf,pData->dataLen );  //接收用户名
         strcpy(user.name, pData->buf);
         MYSQL_RES *res;
         res = selectDB(db, "user", "name", user.name);
@@ -117,7 +116,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream pData) {
     }
 
     //发送flag
-    send(clientFd, pData, pData->dataLen, 0);
+    send(clientFd, pData, DATAHEAD_LEN, 0);
     return 0;
 }
 

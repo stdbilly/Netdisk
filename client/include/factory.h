@@ -2,6 +2,7 @@
 #define __FACTORY_H__
 #include "work_que.h"
 #include "cmd.h"
+#include "crypto.h"
 
 #define CLIENT_CONF "../conf/client.conf"//客户端配置文件
 
@@ -25,7 +26,7 @@ int putsFile(int serverFd,char* filePath);
 int getsFile(int serverFd);
 
 
-int sendRanStr(int fd, pDataStream pData);
-int recvRanStr(int fd, pDataStream pData, const char* user_name);
+int sendRanStr(int sfd, pDataStream_t pData);
+int recvRanStr(int sfd, pDataStream_t pData, const char* user_name);
 int sendPubKey(int serverFd,char* username);
 #endif

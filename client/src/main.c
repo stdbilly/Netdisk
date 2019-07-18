@@ -1,4 +1,5 @@
 #include "../include/cmd.h"
+#include "../include/crypto.h"
 
 int exitFds[2];
 void exitFunc(int sigNum){

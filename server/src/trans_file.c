@@ -113,11 +113,11 @@ int recvRanStr(int sfd, pDataStream pData) {
     memcpy(pData->buf, RanStr_tmp, SER_EN_LEN);  // sign
     free(RanStr_tmp);
     RanStr_tmp = NULL;
-    pData->dataLen = strlen(pData->buf) + DATAHEAD_LEN;
+    pData->dataLen = strlen(pData->buf) ;
 #ifdef DEBUG
     printf("bufLen=%d\n", strlen(pData->buf));
 #endif
-    send(sfd, pData, pData->dataLen, 0);
+    send(sfd, pData, pData->dataLen+ DATAHEAD_LEN, 0);
     return 0;
 }
 

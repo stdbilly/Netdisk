@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "../include/cmd.h"
 #include "../include/crypto.h"
 
@@ -74,17 +73,17 @@ int getsFile(int serverFd) {
     return 0;
 }
 
-int sendRanStr(int sfd, pDataStream pData) {
+int sendRanStr(int sfd, pDataStream_t pData) {
     char RanStr[15];
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
     strcpy(pData->buf, RanStr);
-    pData->dataLen = strlen(pData->buf) + DATAHEAD_LEN;
-    send(sfd, pData,pData->dataLen,0);  // send RanStr
+    pData->dataLen = strlen(pData->buf) ;
+    send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
 
     recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
     
-    recvCycle(sfd, pData->buf, pData->dataLen-DATAHEAD_LEN);
+    recvCycle(sfd, pData->buf, pData->dataLen);
      
     char* RanStr_tmp;
     RanStr_tmp = rsa_verify(pData->buf);  // verify
@@ -102,7 +101,7 @@ int sendRanStr(int sfd, pDataStream pData) {
     return 0;
 }
 
-int recvRanStr(int sfd, pDataStream pData, const char* user_name) {
+int recvRanStr(int sfd, pDataStream_t pData, const char* user_name) {
     char* RanStr_tmp;
     recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
     recvCycle(sfd, pData->buf, pData->dataLen);
@@ -123,7 +122,7 @@ int recvRanStr(int sfd, pDataStream pData, const char* user_name) {
 }
 
 int sendPubKey(int serverFd,char* username) {
-    DataStream data;
+    DataStream_t data;
     int ret;
     char pkPath[100];
     sprintf(pkPath,"%s_rsa_pub.key",username);

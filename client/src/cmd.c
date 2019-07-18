@@ -93,12 +93,12 @@ int userRegister(int serverFd) {
         printf("请输入用户名(不超过20个字符):");
         scanf("%s", name);
         strcpy(data.buf, name);
-        data.dataLen = DATAHEAD_LEN + strlen(data.buf);
+        data.dataLen =  strlen(data.buf);
 
 #ifdef DEBUG
         printf("buflen=%d\n", strlen(data.buf));
 #endif
-        send(serverFd, &data, data.dataLen,
+        send(serverFd, &data, DATAHEAD_LEN +data.dataLen,
              0);  //发送用户名，服务端查询用户名是否已存在
 
         recvCycle(serverFd, &data, DATAHEAD_LEN);  //接收flag
