@@ -2,7 +2,7 @@ SRCS:=$(wildcard src/*.c)
 OBJS:=$(patsubst %.c,%.o,$(SRCS))
 ELF:=client
 CC:=gcc
-CFLAGS:=-g -Wall -lpthread -I include/ -lcrypt -lcrypto
+CFLAGS:=-g -Wall -I include/ -lpthread -lcrypto -lcrypt
 $(ELF):$(OBJS)
 	gcc $^ -o $@ $(CFLAGS)
 .PYONY:clean

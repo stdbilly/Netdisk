@@ -1,4 +1,4 @@
-#include "../include/crypto.h"
+#include "crypto.h"
 
 int rsa_generate_key(const char* user_name)
 {

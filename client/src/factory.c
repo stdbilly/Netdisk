@@ -18,7 +18,7 @@ void* threadFunc(void *p) {
         getTaskSuccess=queGet(pq,&pGet);//拿任务
         pthread_cleanup_pop(1);
         if(!getTaskSuccess){
-            putsFile(pGet->serverFd);
+            //putsFile(pGet->serverFd);
             close(pGet->serverFd);
             free(pGet);
         }
@@ -70,17 +70,6 @@ int factoryInit(int *sfd,pFactory_t p) {
     ret=connect(serverFd,(struct sockaddr*)&serAddr,sizeof(serAddr));
     ERROR_CHECK(ret,-1,"connect");
     *sfd=serverFd;
-    return 0;
-}
-
-int recvCycle(int sfd,void* buf,int recvLen) {
-    char *p=(char*)buf;
-    int ret,total=0;
-    while(total<recvLen) {
-        ret=recv(sfd,p+total,recvLen-total,0);
-        ERROR_CHECK(ret,-1,"recv");
-        total+=ret;
-    }
     return 0;
 }
 

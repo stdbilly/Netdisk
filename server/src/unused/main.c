@@ -1,9 +1,9 @@
-#include "../include/server.h"
-#include "../include/user.h"
-#include "../include/config.h"
-#include "../include/transmission.h"
-#include "../include/sql.h"
-#include "../include/cmd.h"
+#include "server.h"
+#include "user.h"
+#include "config.h"
+#include "transmission.h"
+#include "sql.h"
+#include "cmd.h"
 
 int exit_fds[2];
 int exit_flag = 0;
@@ -433,7 +433,7 @@ int main(int argc, char** argv)
                             close(new_fd);
                             continue;
                         }
-                        if (strcmp(data.buf, "cc27") == 0)
+                        if (strcmp(data.buf, "cc27") != 0)
                         {
                             data.data_len = 0;
                         }

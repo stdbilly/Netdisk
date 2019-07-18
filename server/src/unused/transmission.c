@@ -72,7 +72,7 @@ int send_nonce(int fd, DataPackage* data, const char* user_name)
         return -1;
     }
     char* nonce_tmp;
-    nonce_tmp = rsa_verify(data->buf, user_name);
+    nonce_tmp = rsa_verify(data->buf, user_name); //私钥解密
     if (nonce_tmp == NULL)
     {
         return -1;
