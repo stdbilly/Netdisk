@@ -23,8 +23,8 @@ DROP TABLE IF EXISTS `file`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
  SET character_set_client = utf8mb4 ;
 CREATE TABLE `file` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
   `dir_id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` tinyint(4) NOT NULL,
   `file_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `file_size` int(11) DEFAULT NULL,
@@ -32,8 +32,7 @@ CREATE TABLE `file` (
   `file_md5` varchar(150) DEFAULT NULL,
   `modify_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `file_path` (`file_path`),
-  UNIQUE KEY `file_path_2` (`file_path`)
+  UNIQUE KEY `file_path` (`file_path`)
 ) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

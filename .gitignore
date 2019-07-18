@@ -35,6 +35,8 @@
 *.i*86
 *.x86_64
 *.hex
+client
+server
 
 # Debug files
 *.dSYM/
@@ -47,6 +49,7 @@
 *.cmd
 .tmp_versions/
 .vscode/
+.key
 modules.order
 Module.symvers
 Mkfile.old
