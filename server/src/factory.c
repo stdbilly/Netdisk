@@ -1,4 +1,7 @@
+#include "../include/factory.h"
 #include "../include/cmd.h"
+
+#define DEBUG
 
 void cleanUp(void *p) {
     pthread_mutex_unlock((pthread_mutex_t *)p);
@@ -9,7 +12,7 @@ void *threadFunc(void *p) {
     pQue_t pq = &pthreadInfo->que;
     pNode_t pGet;
     int getTaskSuccess, ret;
-    Message_t msg;
+    DataStream_t data;
     while (1) {
         pthread_mutex_lock(&pq->mutex);
         pthread_cleanup_push(cleanUp, &pq->mutex);
@@ -23,23 +26,26 @@ void *threadFunc(void *p) {
             connectDB(&db);
             while (1) {
                 //接收客户端请求
-                bzero(&msg, sizeof(msg));
-                ret = recvCycle(pGet->clientFd, &msg, MSGHEAD_LEN);  //接收flag
-                if (ret == -1) {
-                    goto DISCONNECT;
-                }
-                ret = recvCycle(pGet->clientFd, msg.buf,
-                                msg.dataLen - MSGHEAD_LEN);  //接收flag
+                bzero(&data, sizeof(data));
+                ret =
+                    recvCycle(pGet->clientFd, &data, DATAHEAD_LEN);  //接收flag
                 if (ret == -1) {
                     goto DISCONNECT;
                 }
 
-                switch (msg.flag) {
+                switch (data.flag) {
                     case LOGIN:
-                        userLogin(pGet->clientFd, db, &msg);
+                        ret = userLogin(pGet->clientFd, db, &data);
+                        if (ret == -1) {
+                            goto DISCONNECT;
+                        }
                         break;
                     case REGISTER:
-                        userRegister(pGet->clientFd, db, &msg);
+                        ret = userRegister(pGet->clientFd, db, &data);
+                        if (ret == -1) {
+                            goto DISCONNECT;
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -80,6 +86,10 @@ int factoryInit(int *sfd, pFactory_t p) {
     char ip[20] = {0};
     FILE *config;
     config = fopen(SERVER_CONF, "r");
+    if (config == NULL) {
+        perror("fopen");
+        return -1;
+    }
     fscanf(config, "%s %d %d %d", ip, &port, &threadNum, &capacity);
 
     queInit(&p->que, capacity);

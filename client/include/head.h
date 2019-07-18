@@ -1,5 +1,7 @@
+#ifndef __HEAD_H__
+#define __HEAD_H__
+//#define _XOPEN_SOURCE
 #define _GNU_SOURCE
-#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,3 +43,6 @@
 #define THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return -1;}}
 #define CHILD_THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return (void*)-1;}}
 
+#define NAME_LEN 20
+
+#endif

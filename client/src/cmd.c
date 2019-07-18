@@ -1,5 +1,8 @@
 #include "../include/cmd.h"
 #include "../include/crypto.h"
+#include "../include/factory.h"
+
+#define DEBUG
 
 int loginWindow(int serverFd) {
     int option, ret;
@@ -15,7 +18,7 @@ login:
             ret = userRegister(serverFd);
             break;
         case 3:
-            return 1;
+            return -1;
         default:
             printf("输入有误，请重新输入...\n");
             sleep(1);
@@ -23,7 +26,9 @@ login:
             break;
     }
     if (ret == -1) {
-        sleep(3);
+        printf("输入任意键返回...");
+        getchar();
+        getchar();
         goto login;
     }
     printf("登录成功...\n");
@@ -34,84 +39,181 @@ login:
 }
 
 int userLogin(int serverFd) {
-    Message_t msg;
-    char tmp[20] = {0};
-    bzero(&msg, sizeof(Message_t));
+    DataStream_t data;
+    int ret;
+    char name[21] = {0};
+    data.flag = LOGIN;
+    send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
+
+    // char tmp[20] = {0};
+    bzero(&data, sizeof(DataStream_t));
     printf("请输入用户名:");
-    scanf("%s", tmp);
-    strcpy(msg.buf, tmp);
-    msg.flag = LOGIN;
-    msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
-    send(serverFd, &msg, msg.dataLen, 0);  //发送用户名和flag
+    scanf("%s", name);
+    strcpy(data.buf, name);
 
-    //接收返回信息，salt值或错误信息
-    recvCycle(serverFd, &msg, MSGHEAD_LEN);
-    recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
+    char pkPath[100];
+    sprintf(pkPath, "%s_rsa.key", name);
+    if (access(pkPath, F_OK) == 0) {  //有私钥
+        data.flag = NOPASS_LOGIN;
+        data.dataLen = strlen(data.buf);
+        send(serverFd, &data, data.dataLen + DATAHEAD_LEN,
+             0);  //发送用户名和flag
 
-    printf("flag=%d,buf=%s\n", msg.flag, msg.buf);
-    if (msg.flag == SUCCESS) {
-        char password[100] = {0}, *temp;
-        temp = getpass("请输入密码:");
-        strcpy(password, crypt(temp, msg.buf));  //密码生成密文
-        bzero(msg.buf, sizeof(msg.buf));
-        strcpy(msg.buf, password);
-        //将密文发送给服务器
-        msg.dataLen = MSGHEAD_LEN + strlen(msg.buf);
-        send(serverFd, &msg, msg.dataLen, 0);
-        //接收返回信息token或错误信息
-        bzero(msg.buf, sizeof(msg.buf));
-        recvCycle(serverFd, &msg, MSGHEAD_LEN);
-        recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
-
-        //保存token
-
-        if (msg.flag == SUCCESS) {
-            printf("login success\n");
-        } else {
-            printf("error:%s\n", msg.buf);
+        ret = sendRanStr(serverFd, &data);  //发送随机字符串
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
             return -1;
         }
-    } else {
-        printf("error:%s\n", msg.buf);
-        return -1;
+        ret = recvRanStr(serverFd, &data, name);
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            return -1;
+        }
+
+        recvCycle(serverFd, &data, DATAHEAD_LEN);  //接收falg
+        if (data.flag == SUCCESS) {
+            printf("login success\n");
+            return 0;
+        } else {
+            printf("login fail,plese retry\n");
+            return -1;
+        }
+    } else {  //没有私钥
+        data.dataLen = strlen(data.buf);
+        send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);  //发送用户名
+
+        char *password;
+        password = getpass("请输入密码:");
+
+        ret = sendRanStr(serverFd, &data);  //发送随机字符串
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            return -1;
+        }
+        //发送加密后的密码
+        char *en_pass = rsa_encrypt(password);
+        free(password);
+        password = NULL;
+        if (en_pass == NULL) {
+            printf("password encrypt failed\n");
+            return -1;
+        }
+        memcpy(data.buf, en_pass, SER_EN_LEN);
+        free(en_pass);
+        en_pass = NULL;
+        data.dataLen = SER_EN_LEN;
+#ifdef DEBUG
+        printf("data.dataLen=%ld,SER_EN_LEN=%d\n", strlen(data.buf),
+               SER_EN_LEN);
+#endif
+        ret = send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
+#ifdef DEBUG
+        printf("send ret=%d\n", ret);
+#endif
+
+        //接收返回信息
+        recvCycle(serverFd, &data, DATAHEAD_LEN);
+        if (data.flag == SUCCESS) {
+            printf("login success\n");
+            return 0;
+        } else {
+            printf("login fail,plese retry\n");
+            return -1;
+        }
     }
+
     return 0;
 }
 
 int userRegister(int serverFd) {
-    Message_t msg;
+    DataStream_t data;
     int ret;
-    char tmp[20] = {0}, *passwd;
-    bzero(&msg, sizeof(Message_t));
-    printf("请输入用户名(不超过20个字符):");
-    scanf("%s", tmp);
-    sprintf(msg.buf, "%s%s", tmp, "#");
+    char name[NAME_LEN + 1] = {0}, *passwd;
+    bzero(&data, sizeof(DataStream_t));
+    data.flag = REGISTER;
+    send(serverFd, &data, DATAHEAD_LEN, 0);  //发送flag
+
+    while (data.flag == REGISTER || data.flag == USER_EXIST) {
+        printf("请输入用户名(不超过20个字符):");
+        scanf("%s", name);
+        strcpy(data.buf, name);
+        data.dataLen = strlen(data.buf);
+
+#ifdef DEBUG
+        printf("buflen=%ld\n", strlen(data.buf));
+#endif
+        send(serverFd, &data, DATAHEAD_LEN + data.dataLen,
+             0);  //发送用户名，服务端查询用户名是否已存在
+
+        recvCycle(serverFd, &data, DATAHEAD_LEN);  //接收flag
+        if (data.flag == USER_EXIST) {
+            printf("用户名已存在，请重新输入\n");
+            sleep(3);
+            system("clear");
+        }
+    }
+
     passwd = getpass("请输入密码(不超过20个字符):");
-    strcat(msg.buf, passwd);
+    ret = rsa_generate_key(name);  //生成用户的公钥和私钥
+    if (ret) {
+        return -1;
+    }
 
-    printf("msg.buf=%s\n", msg.buf); 
+    ret = sendRanStr(serverFd, &data);  //发送随机字符串
+    if (ret == -1) {
+        printf("ranStr verify failed\n");
+        return -1;
+    }
+    // printf("data.buf=%s\n", data.buf);
 
-    //ret=rsa_generate_key()
-    
-    //发送用户名和密码
-    msg.flag = REGISTER;
-    msg.dataLen = strlen(msg.buf) + MSGHEAD_LEN;
-    send(serverFd, &msg, msg.dataLen, 0);
+    //发送用户的公钥
+    sendPubKey(serverFd, name);
+
+    //用server的公钥加密密码，并发送给server
+    char *en_pass = rsa_encrypt(passwd);
+    free(passwd);
+    passwd = NULL;
+    if (en_pass == NULL) {
+        printf("password encrypt failed\n");
+        return -1;
+    }
+    memcpy(data.buf, en_pass, SER_EN_LEN);
+    free(en_pass);
+    en_pass = NULL;
+    data.dataLen = SER_EN_LEN;
+#ifdef DEBUG
+    printf("data.dataLen=%ld,SER_EN_LEN=%d\n", strlen(data.buf), SER_EN_LEN);
+#endif
+    ret = send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
+#ifdef DEBUG
+    printf("send ret=%d\n", ret);
+#endif
 
     //接收返回信息
-    recvCycle(serverFd, &msg, MSGHEAD_LEN);
-    recvCycle(serverFd, msg.buf, msg.dataLen - MSGHEAD_LEN);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
 
-    if (msg.flag == SUCCESS) {
+    if (data.flag == SUCCESS) {
         printf("注册成功\n");
     } else {
-        printf("error:%s\n", msg.buf);
+        printf("注册失败\n");
+        // delete key file
+        char pk_path[100];
+        sprintf(pk_path, "%s_rsa.key", name);
+        ret = access(pk_path, F_OK);
+        if (ret == 0) {
+            remove(pk_path);
+        }
+        sprintf(pk_path, "%s_rsa_pub.key", name);
+        ret = access(pk_path, F_OK);
+        if (ret == 0) {
+            remove(pk_path);
+        }
         return -1;
     }
     return 0;
 }
 
-void printMenu(){
+void printMenu() {
     printf("请输入以下命令:\n\n");
     printf("ls:         列出文件\n");
     printf("cd <path>:  改变工作路径\n");
@@ -123,3 +225,23 @@ void printMenu(){
     printf("help:       显示菜单\n");
     printf("exit:       退出\n\n");
 }
+
+/* char *genRandomStr(char *str, int len) {
+    int i, flag;
+    srand(time(NULL));
+    for (i = 0; i < len; i++) {
+        flag = rand() % 3;
+        switch (flag) {
+            case 0:
+                str[i] = 'A' + rand() % 26;
+                break;
+            case 1:
+                str[i] = 'a' + rand() % 26;
+                break;
+            case 2:
+                str[i] = '0' + rand() % 10;
+                break;
+        }
+    }
+    return str;
+} */

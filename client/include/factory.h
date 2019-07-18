@@ -1,8 +1,10 @@
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
 #include "work_que.h"
+#include "cmd.h"
+#include "crypto.h"
 
-#define CLIENT_CONF "../conf/client.conf"//客户端配置文件
+#define CLIENT_CONF "conf/client.conf"//客户端配置文件
 
 typedef struct{
     Que_t que;
@@ -18,8 +20,13 @@ int epollAdd(int epfd,int fd);
 int tcpConnect(int *sfd);
 int threadPoolExit(pFactory_t pf);
 
+
 int recvCycle(int sfd,void* buf,int recvLen);
-int putsFile(int serverFd);
+int putsFile(int serverFd,char* filePath);
 int getsFile(int serverFd);
 
+
+int sendRanStr(int sfd, pDataStream_t pData);
+int recvRanStr(int sfd, pDataStream_t pData, const char* user_name);
+int sendPubKey(int serverFd,char* username);
 #endif

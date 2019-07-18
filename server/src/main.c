@@ -1,6 +1,7 @@
 #include "../include/cmd.h"
+#include "../include/factory.h"
 
-int exitFds[0];
+int exitFds[2];
 void sigFunc(int sigNum) {
     printf("%d is coming\n", sigNum);
     write(exitFds[1], &sigNum, 1);

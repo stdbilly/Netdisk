@@ -1,8 +1,9 @@
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
 #include "work_que.h"
+#include "cmd.h"
 
-#define SERVER_CONF "../conf/server.conf"  //服务器配置文件
+#define SERVER_CONF "conf/server.conf"  //服务器配置文件
 
 typedef struct {
     Que_t que;
@@ -21,5 +22,10 @@ int send_file(int clientFd);
 int recv_file(int clientFd);
 int recvCycle(int sfd, void *buf, int recvLen);
 int send_cycle(int sfd, const char* data, int send_len);
+
+
+int sendRanStr(int fd, pDataStream_t data, const char* user_name);
+int recvRanStr(int sfd, pDataStream_t pData);
+int recvPubKey(int clientFd,char* username);
 
 #endif
