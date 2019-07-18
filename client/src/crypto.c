@@ -1,5 +1,7 @@
 #include "../include/crypto.h"
 
+#define DEBUG
+
 int rsa_generate_key(const char* user_name)
 {
     int ret;
@@ -181,6 +183,9 @@ char* rsa_verify(char* str)
 
     de_str = (char*)calloc(SER_DE_LEN, sizeof(char));
     ret = RSA_public_decrypt(SER_EN_LEN, (unsigned char*)str, (unsigned char*)de_str, rsa, RSA_PKCS1_PADDING);
+#ifdef DEBUG
+        printf("de_strLen=%ld\n",strlen(de_str));
+#endif
     if (ret == -1)
     {
         printf("decrption failed\n");

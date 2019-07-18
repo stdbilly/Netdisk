@@ -76,12 +76,16 @@ int getsFile(int serverFd) {
 
 int sendRanStr(int sfd, pDataStream_t pData) {
     char RanStr[15];
+    int ret;
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
     strcpy(pData->buf, RanStr);
-    pData->dataLen = strlen(pData->buf) ;
-    send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
+    pData->dataLen = strlen(pData->buf)+1 ;
+    ret=send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
+#ifdef DEBUG
+    printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf),ret);
 
+#endif
     recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
     
     recvCycle(sfd, pData->buf, pData->dataLen);
@@ -131,7 +135,7 @@ int sendPubKey(int serverFd,char* username) {
     ERROR_CHECK(pkfd,-1,"open");
     
     int fd = open(pkPath, O_RDONLY);
-     ERROR_CHECK(fd,-1,"open");
+    ERROR_CHECK(fd,-1,"open");
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
     data.dataLen = sizeof(buf.st_size);
@@ -160,3 +164,5 @@ int recvCycle(int sfd,void* buf,int recvLen) {
     }
     return 0;
 }
+
+

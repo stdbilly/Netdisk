@@ -83,9 +83,6 @@ int factoryInit(int *sfd, pFactory_t p) {
         return -1;
     }
     fscanf(config, "%s %d %d %d", ip, &port, &threadNum, &capacity);
-#ifdef DEBUG
-    printf("threadNum=%d\n",threadNum);
-#endif
 
     queInit(&p->que, capacity);
     pthread_cond_init(&p->cond, NULL);

@@ -1,6 +1,6 @@
 #include "../include/cmd.h"
-#include "../include/factory.h"
 #include "../include/crypto.h"
+#include "../include/factory.h"
 
 #define TOKEN_LEN 8
 #define SALT_lEN 8
@@ -26,7 +26,7 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
     }
 
     //发送salt给客户端
-    //strcpy(pData->buf, user.salt);
+    // strcpy(pData->buf, user.salt);
     pData->flag = SUCCESS;
     pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
@@ -64,7 +64,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
         bzero(&user, sizeof(User_t));
         bzero(pData, sizeof(DataStream_t));
         recvCycle(clientFd, pData, DATAHEAD_LEN);
-        recvCycle(clientFd, pData->buf,pData->dataLen );  //接收用户名
+        recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
         strcpy(user.name, pData->buf);
         MYSQL_RES *res;
         res = selectDB(db, "user", "name", user.name);
@@ -89,10 +89,19 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
 
     //接收用户加密后的密码
     recvCycle(clientFd, pData, DATAHEAD_LEN);
+#ifdef DEBUG
+    printf("dataLen=%d\n", pData->dataLen);
+#endif
     recvCycle(clientFd, pData->buf, pData->dataLen);
 
     //解密
     char *de_pass = rsa_decrypt(pData->buf);
+    if (de_pass == NULL) {
+        printf("decrypt password fail\n");
+        pData->flag=FAIL;
+        send(clientFd,pData,DATAHEAD_LEN,0);
+        return -1;
+    }
 #ifdef DEBUG
     printf("password=%s\n", de_pass);
 #endif
@@ -108,13 +117,13 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
 
     ret = insertUser(db, user.name, password);
     if (ret == -1) {
-        pData->flag=FAIL;
+        pData->flag = FAIL;
         printf("插入user失败\n");
     } else if (ret == 0) {
 #ifdef _DEBUG
         printf("user created\n");
 #endif
-        pData->flag=SUCCESS;
+        pData->flag = SUCCESS;
     }
 
     //发送flag
@@ -146,7 +155,7 @@ int getUserInfo(char *buf, pUser_t puser) {
 char *genRandomStr(char *str, int len) {
     int i, flag;
     srand(time(NULL));
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < len - 1; i++) {
         flag = rand() % 3;
         switch (flag) {
             case 0:
@@ -160,5 +169,6 @@ char *genRandomStr(char *str, int len) {
                 break;
         }
     }
+
     return str;
 }

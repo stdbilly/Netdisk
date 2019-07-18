@@ -3,6 +3,7 @@
 #include "../include/factory.h"
 
 #define FILENAME "44.day10-项目讲解.avi"
+#define DEBUG
 
 typedef struct {
     int dataLen;
@@ -103,6 +104,7 @@ int recv_file(int clientFd) {
 
 int recvRanStr(int sfd, pDataStream_t pData) {
     char* RanStr_tmp;
+    int ret;
     recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
     recvCycle(sfd, pData->buf, pData->dataLen);
 
@@ -110,14 +112,20 @@ int recvRanStr(int sfd, pDataStream_t pData) {
     if (RanStr_tmp == NULL) {
         return -1;
     }
+#ifdef DEBUG
+    printf("enStrLen=%ld,SER_EN_LEN=%d\n",strlen(RanStr_tmp),SER_EN_LEN);
+#endif     
     memcpy(pData->buf, RanStr_tmp, SER_EN_LEN);  // sign
     free(RanStr_tmp);
     RanStr_tmp = NULL;
-    pData->dataLen = strlen(pData->buf) ;
+    pData->dataLen = SER_EN_LEN ;
 #ifdef DEBUG
     printf("bufLen=%ld\n", strlen(pData->buf));
 #endif
-    send(sfd, pData, pData->dataLen+ DATAHEAD_LEN, 0);
+    ret=send(sfd, pData, pData->dataLen+ DATAHEAD_LEN, 0);
+#ifdef DEBUG
+    printf("send ret=%d\n",ret);
+#endif    
     return 0;
 }
 
@@ -132,11 +140,14 @@ int recvPubKey(int clientFd,char* username) {
     off_t fileSize, download = 0;
     recvCycle(clientFd, &data, DATAHEAD_LEN);
     recvCycle(clientFd, &fileSize, data.dataLen);
+    #ifdef DEBUG
+    printf("filesize=%ld\n",fileSize);
+    #endif
     int fds[2];
     pipe(fds);
 
     while (download < fileSize) {
-        ret = splice(clientFd, NULL, fds[1], NULL, 65536,
+        ret = splice(clientFd, NULL, fds[1], NULL, fileSize,
                      SPLICE_F_MOVE | SPLICE_F_MORE);
         if (ret == 0) {
             break;
@@ -144,6 +155,9 @@ int recvPubKey(int clientFd,char* username) {
         ERROR_CHECK(ret, -1, "splice");
         splice(fds[0], NULL, fd, NULL, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
+        if(download==fileSize){
+            break;
+        }
     }
     printf("recvPubKey success\n");
     close(fd);

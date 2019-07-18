@@ -7,7 +7,7 @@
 int loginWindow(int serverFd) {
     int option, ret;
 login:
-    system("clear");
+    //system("clear");
     printf("\n1.登录\n2.注册\n3.退出\n\n请输入对应的数字(1-3)\n");
     scanf("%d", &option);
     switch (option) {
@@ -117,7 +117,11 @@ int userRegister(int serverFd) {
     }
 
     ret = sendRanStr(serverFd, &data);  //发送随机字符串
-    printf("data.buf=%s\n", data.buf);
+    if(ret==-1){
+        printf("ranStr verify failed\n");
+        return -1;
+    }
+    //printf("data.buf=%s\n", data.buf);
 
     //发送用户的公钥
     sendPubKey(serverFd, name);
@@ -133,9 +137,14 @@ int userRegister(int serverFd) {
     memcpy(data.buf, en_pass, SER_EN_LEN);
     free(en_pass);
     en_pass = NULL;
-    data.dataLen = strlen(data.buf);
+    data.dataLen = SER_EN_LEN;
+    #ifdef DEBUG
     printf("data.dataLen=%ld,SER_EN_LEN=%d\n", strlen(data.buf), SER_EN_LEN);
-    send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
+    #endif
+    ret=send(serverFd, &data, DATAHEAD_LEN + data.dataLen, 0);
+    #ifdef DEBUG
+    printf("send ret=%d\n",ret);
+    #endif
 
     //接收返回信息
     recvCycle(serverFd, &data, DATAHEAD_LEN);
@@ -173,3 +182,23 @@ void printMenu() {
     printf("help:       显示菜单\n");
     printf("exit:       退出\n\n");
 }
+
+/* char *genRandomStr(char *str, int len) {
+    int i, flag;
+    srand(time(NULL));
+    for (i = 0; i < len; i++) {
+        flag = rand() % 3;
+        switch (flag) {
+            case 0:
+                str[i] = 'A' + rand() % 26;
+                break;
+            case 1:
+                str[i] = 'a' + rand() % 26;
+                break;
+            case 2:
+                str[i] = '0' + rand() % 10;
+                break;
+        }
+    }
+    return str;
+} */
