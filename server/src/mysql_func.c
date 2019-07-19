@@ -58,6 +58,106 @@ int userVerify(MYSQL* db, const char* user_name, const char* password) {
     }
 }
 
+int insertUserTrans(MYSQL* db, pUser_t puser,pFileStat_t pfile) {
+    char query[300];
+    int ret;
+
+    // transacton begin
+    strcpy(query, "BEGIN");
+    ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+
+    // insert into user
+    ret = insertUser(db, puser);
+    if (ret) {
+        strcpy(query, "ROLLBACK");
+        mysql_query(db, query);
+        return -1;
+    }
+
+    // insert into file and user_file
+    ret =
+        insertFile(db, puser, pfile);
+    if (ret) {
+        strcpy(query, "ROLLBACK");
+        mysql_query(db, query);
+        return -1;
+    }
+
+    // transaction commit
+    strcpy(query, "COMMIT");
+    ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    return 0;
+}
+
+int insertFile(MYSQL* db, pUser_t puser,pFileStat_t pfile) {
+    int ret;
+    char query[300];
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    char file_path[300];
+
+    res = selectDB(db, "file", "id", pfile->dir_id);
+    if (res == NULL) {
+        return -1;
+    }
+    row = mysql_fetch_row(res);
+    mysql_free_result(res);
+    sprintf(file_path, "%s/%s", row[5], pfile->file_name);
+#ifdef DEBUG
+    printf("file_path=%s\n", file_path);
+#endif
+
+    if (pfile->type == 0) {
+        sprintf(query,
+                "INSERT INTO file VALUES (%s, default, %d, '%s', NULL, '%s', "
+                "NULL, default)",
+               pfile->dir_id,pfile->type,pfile->file_name, file_path);
+    } else {
+        sprintf(query,
+                "INSERT INTO file VALUES (%s, default, %d, '%s', %ld, '%s', "
+                "'%s', default)",
+                pfile->dir_id,pfile->type,pfile->file_name, pfile->file_size, file_path, pfile->file_md5);
+    }
+#ifdef DEBUG
+    printf("sql: %s\n", query);
+#endif
+    ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+
+    // insert into table user_file
+    res = selectDB(db, "user", "name",puser->name);
+    if (res == NULL) {
+        return -1;
+    }
+    row = mysql_fetch_row(res);
+    mysql_free_result(res);
+    strcpy(puser->id, row[0]);
+    res = selectDB(db, "file", "file_path", file_path);
+    row = mysql_fetch_row(res);
+    mysql_free_result(res);
+    strcpy(pfile->id, row[1]);
+
+    ret = insertUserFile(db, puser->id,pfile->id);
+    if (ret) {
+        return -1;
+    }
+    return 0;
+}
+
+int insertUserFile(MYSQL* db, char* user_id, char* file_id) {
+    char query[300];
+    sprintf(query, "INSERT INTO user_file VALUES (default, %s, %s)",
+            user_id, file_id);
+#ifdef DEBUG
+    printf("sql: %s\n", query);
+#endif
+    int ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    return 0;
+}
+
 int modifyDB(MYSQL* db, char* cmd) {
     int ret;
     ret = mysql_query(db, cmd);
@@ -151,11 +251,11 @@ MYSQL_RES* selectDB(MYSQL* db, const char* table, const char* field,
     }
 }
 
-int insertUser(MYSQL* db, const char* name, const char* password) {
+int insertUser(MYSQL* db,pUser_t puser) {
     int ret;
-    char query[300] = {0};
-    sprintf(query, "INSERT INTO user(name,password) VALUES('%s','%s')", name,
-            password);
+    char query[600] = {0};
+    sprintf(query, "INSERT INTO user(name,password) VALUES('%s','%s')",puser->name,
+           puser->password);
     ret = mysql_query(db, query);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     return 0;

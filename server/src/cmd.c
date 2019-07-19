@@ -94,7 +94,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
             pData->flag = SUCCESS;
             send(clientFd, pData, DATAHEAD_LEN, 0);
         } else {
-#ifdef _DEBUG
+#ifdef DEBUG
             printf("username already used\n");
 #endif
             mysql_free_result(res);
@@ -136,19 +136,36 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
         strcat(password, tmp);
     }
 
-    ret = insertUser(db, user.name, password);
+    strcpy(user.password, password);
+    FileStat_t fileInfo;
+    strcpy(fileInfo.dir_id, "1");
+    fileInfo.type = 0;
+    strcpy(fileInfo.file_name, user.name);
+    fileInfo.file_size = 0;
+    strcpy(fileInfo.file_md5, "");
+
+    if(!selectDB(db,"file","dir_id","-1")){
+        char query[300]="INSERT INTO file(dir_id, type, file_name, file_path) VALUES(";
+        sprintf(query,"%s %d,%d,'%s','%s')",query,-1,0,"netdisk","/netdisk");
+        printf("%s\n",query);
+        ret=mysql_query(db,query);
+        MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    }
+
+    ret = insertUserTrans(db, &user, &fileInfo);
+
     if (ret == -1) {
         pData->flag = FAIL;
         printf("插入user失败\n");
-    } else if (ret == 0) {
-#ifdef _DEBUG
-        printf("user created\n");
-#endif
-        pData->flag = SUCCESS;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
+        return -1;
     }
-
-    //发送flag
+#ifdef DEBUG
+    printf("user created\n");
+#endif
+    pData->flag = SUCCESS;
     send(clientFd, pData, DATAHEAD_LEN, 0);
+
     return 0;
 }
 
