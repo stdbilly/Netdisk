@@ -21,6 +21,7 @@ enum cmd_no {
     PUTS_CMD,
     GETS_CMD,
     HELP_CMD,
+    MKDIR_CMD,
     EXIT_CMD
 };
 

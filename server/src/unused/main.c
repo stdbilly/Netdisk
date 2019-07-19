@@ -611,7 +611,7 @@ int main(int argc, char** argv)
                     continue;
                 }
             }
-
+            //处理命令
             for (j = 0; j < max_client; j++)        //command coming in
             {
                 if (evs[i].data.fd == users[j].fd)

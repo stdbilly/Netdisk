@@ -12,9 +12,11 @@ login:
     scanf("%d", &option);
     switch (option) {
         case 1:
+            system("clear");
             ret = userLogin(serverFd);
             break;
         case 2:
+            system("clear");
             ret = userRegister(serverFd);
             break;
         case 3:
@@ -213,17 +215,72 @@ int userRegister(int serverFd) {
     return 0;
 }
 
+int getCMD(char *arg) {
+    char cmdStr[200] = {0}, buf[200] = {0};
+    int cmdNum = -1;
+    read(STDIN_FILENO,buf,sizeof(buf));
+    buf[strlen(buf) - 1] = '\0';
+#ifdef DEBUG
+    printf("buf=%s\n",buf);
+#endif
+    size_t i = 0, j = 0;
+    for (i = 0; i < strlen(buf); i++) {
+        if (isalpha(buf[i])) {
+            cmdStr[j++] = buf[i];
+        } else if (isspace(buf[i]) || buf[i] == '\0') {
+            break;
+        }
+    }
+    if (buf[i] != '\0') {
+        j = 0;
+        for (; i < strlen(buf); i++) {
+            if (!isspace(buf[i]) && buf[i] != '\0') {
+                arg[j++] = buf[i];
+            }
+        }
+    }
+#ifdef DEBUG
+    printf("cmdStr=%s,arg=%s\n",cmdStr,arg);
+#endif
+
+    //取出操作对应的字符串,分析输入的命令
+    if (!strcmp(cmdStr, "cd")) {
+        cmdNum = CD_CMD;
+    } else if (!strcmp(cmdStr, "ls")) {
+        cmdNum = LS_CMD;
+    } else if (!strcmp(cmdStr, "gets")) {
+        cmdNum = GETS_CMD;
+    } else if (!strcmp(cmdStr, "puts")) {
+        cmdNum = PUTS_CMD;
+    } else if (!strcmp(cmdStr, "remove") || !strcmp(cmdStr, "rm")) {
+        cmdNum = RM_CMD;
+    } else if (!strcmp(cmdStr, "pwd")) {
+        cmdNum = PWD_CMD;
+    } else if (!strcmp(cmdStr, "help")) {
+        cmdNum = HELP_CMD;
+    } else if (!strcmp(cmdStr, "exit")) {
+        cmdNum = EXIT_CMD;
+    } else if (!strcmp(cmdStr, "mkdir")) {
+        cmdNum = MKDIR_CMD;
+    } else {
+        printf("%s : invaild commend\n", cmdStr);
+        return -1;
+    }
+
+    return cmdNum;
+}
+
 void printMenu() {
     printf("请输入以下命令:\n\n");
-    printf("ls:         列出文件\n");
-    printf("cd <path>:  改变工作路径\n");
-    printf("pwd:        显示当前工作路径\n");
-    printf("rm <file>:  删除文件\n");
-    printf("mkdir <dir>:创建文件夹\n");
-    printf("puts <file>:上传文件\n");
-    printf("gets <file>:下载文件\n");
-    printf("help:       显示菜单\n");
-    printf("exit:       退出\n\n");
+    printf("ls:             列出文件\n");
+    printf("cd <path>:      改变工作路径\n");
+    printf("pwd:            显示当前工作路径\n");
+    printf("rm <file>:      删除文件\n");
+    printf("mkdir <dir>:    创建文件夹\n");
+    printf("puts <file>:    上传文件\n");
+    printf("gets <file>:    下载文件\n");
+    printf("help:           显示菜单\n");
+    printf("exit:           退出\n\n");
 }
 
 /* char *genRandomStr(char *str, int len) {

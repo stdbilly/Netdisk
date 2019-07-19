@@ -21,6 +21,7 @@ enum CMD_NO{
     PUTS_CMD,
     GETS_CMD,
     HELP_CMD,
+    MKDIR_CMD,
     EXIT_CMD
 };
 
@@ -36,5 +37,7 @@ int loginWindow(int serverFd);
 int userLogin(int serverFd);
 int userRegister(int serverFd);
 void printMenu();
+void dealLine(char* from, char* to);
+int getCMD(char* arg);
 
 #endif

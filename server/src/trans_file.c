@@ -158,7 +158,8 @@ int recvPubKey(int clientFd,char* username) {
         if(download==fileSize){
             break;
         }
-    }
+    } 
+    //bug fix
     printf("recvPubKey success\n");
     close(fd);
     return 0;

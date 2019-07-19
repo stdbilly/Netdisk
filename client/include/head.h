@@ -37,6 +37,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <ctype.h>
 
 #define ARGS_CHECK(argc,val) {if(argc!=val)  {printf("error args\n");return -1;}}
 #define ERROR_CHECK(ret,retVal,funcName) {if(ret==retVal) {perror(funcName);return -1;}}
