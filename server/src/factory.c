@@ -24,6 +24,8 @@ void *threadFunc(void *p) {
         if (!getTaskSuccess) {
             MYSQL *db;
             connectDB(&db);
+            UserStat_t ustat;
+            bzero(&ustat, sizeof(UserStat_t));
             while (1) {
                 //接收客户端请求
                 bzero(&data, sizeof(data));
@@ -35,16 +37,30 @@ void *threadFunc(void *p) {
 
                 switch (data.flag) {
                     case LOGIN:
-                        ret = userLogin(pGet->clientFd, db, &data);
+                        ret = userLogin(pGet->clientFd, db, &data,&ustat);
                         if (ret == -1) {
                             goto DISCONNECT;
                         }
                         break;
                     case REGISTER:
-                        ret = userRegister(pGet->clientFd, db, &data);
+                        ret = userRegister(pGet->clientFd, db, &data,&ustat);
                         if (ret == -1) {
                             goto DISCONNECT;
                         }
+                        break;
+                    case LS_CMD:
+                        break;
+                    case CD_CMD:
+                        break;
+                    case PWD_CMD:
+                        break;
+                    case RM_CMD:
+                        break;
+                    case GETS_CMD:
+                        break;
+                    case PUTS_CMD:
+                        break;
+                    case MKDIR_CMD:
                         break;
                     default:
                         break;

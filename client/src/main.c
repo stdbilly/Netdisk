@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     DataStream_t data;
 
     //先登录或注册
-    ret = loginWindow(serverFd);
+    ret = loginWindow(serverFd,&data);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }
@@ -76,6 +76,8 @@ int main(int argc, char* argv[]) {
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:
+                        break;
+                    case MKDIR_CMD:
                         break;
                     case -1:
                         printf("输入任意键返回...");

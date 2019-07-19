@@ -15,6 +15,6 @@ typedef struct
 }User, *Users;
 
 int user_verify(MYSQL* conn, const char* user_name, const char* password);
-
 char* user_find_root(MYSQL* conn, const char* user_name);
+
 #endif

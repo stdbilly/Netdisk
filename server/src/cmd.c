@@ -2,20 +2,16 @@
 #include "../include/crypto.h"
 #include "../include/factory.h"
 
-#define TOKEN_LEN 8
-#define SALT_lEN 8
 #define DEBUG
 
-int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
-    User_t user;
+int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
     char name[21] = {0};
     int ret;
-    bzero(&user, sizeof(User_t));
     recvCycle(clientFd, pData, DATAHEAD_LEN);             //接收flag
     if (pData->flag == NOPASS_LOGIN) {                    //无密码登录
         recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
         strcpy(name, pData->buf);
-
+        
         ret = recvRanStr(clientFd, pData);
         if (ret == -1) {
             printf("ranStr verify failed\n");
@@ -31,10 +27,6 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
             return -1;
         }
 
-        printf("user_verified\n");
-        pData->flag = SUCCESS;
-        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
-        return 0;
     } else {                                              //密码登录
         recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
         strcpy(name, pData->buf);
@@ -68,17 +60,25 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData) {
             pData->flag = FAIL;
             send(clientFd, pData, DATAHEAD_LEN, 0);
             return -1;
-        } else {
-            pData->flag = SUCCESS;
-            send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
-            return 0;
         }
     }
+    printf("user_verified\n");
+        pData->flag = SUCCESS;
+        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
 
+    strcpy(pustat->user.name,name);
+    char* rootDirId=findRootDir(db,name);//找到根目录id
+    strcpy(pustat->rootDirId,rootDirId);
+    strcpy(pustat->curDirId,rootDirId);
+#ifdef DEBUG
+        printf("username: %s,rootDirId=%s\n", name,rootDirId);
+#endif
+    free(rootDirId);
+    rootDirId=NULL;
     return 0;
 }
 
-int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
+int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
     User_t user;
     int ret;
     while (pData->flag == REGISTER || pData->flag == USER_EXIST) {
@@ -166,6 +166,12 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
     pData->flag = SUCCESS;
     send(clientFd, pData, DATAHEAD_LEN, 0);
 
+    strcpy(pustat->user.name,user.name);
+    char* rootDirId=findRootDir(db,user.name);//找到根目录id
+    strcpy(pustat->rootDirId,rootDirId);
+    strcpy(pustat->curDirId,rootDirId);
+    free(rootDirId);
+    rootDirId=NULL;
     return 0;
 }
 

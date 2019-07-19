@@ -33,11 +33,10 @@ enum return_flag{
     FILE_EXIST 
 };
 
-int loginWindow(int serverFd);
-int userLogin(int serverFd);
-int userRegister(int serverFd);
+int loginWindow(int serverFd,pDataStream_t pData);
+int userLogin(int serverFd,pDataStream_t pData);
+int userRegister(int serverFd,pDataStream_t pData);
 void printMenu();
-void dealLine(char* from, char* to);
 int getCMD(char* arg);
 
 #endif
