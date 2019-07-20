@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
                 cmdNum = getCMD(arg);
                 switch (cmdNum) {
                     case LS_CMD:
+                        ls_cmd(serverFd)
                         break;
                     case CD_CMD:
                         break;

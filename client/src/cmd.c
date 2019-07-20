@@ -202,7 +202,7 @@ int userRegister(int serverFd, pDataStream_t pData) {
     recvCycle(serverFd, pData, DATAHEAD_LEN);
 
     if (pData->flag == SUCCESS) {
-        printf("注册成功\n");
+        printf("注册成功，请登录\n");
     } else {
         printf("注册失败\n");
         // delete key file
@@ -223,16 +223,26 @@ int userRegister(int serverFd, pDataStream_t pData) {
     return 0;
 }
 
-/* int ls_cmd(int serverFd,char* arg){
+int ls_cmd(int serverFd,char* arg){
     DataStream_t data;
     if (strlen(arg))
     {
         data.flag=LS_CMD_ARG;
+        data.dataLen=strlen(arg);
+        strcpy(data.buf,arg);
+        send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
     }
     data.flag=LS_CMD;
     send(serverFd,&data,DATAHEAD_LEN,0);
-
-} */
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    if (data.dataLen==0)
+    {
+        return 0;
+    }
+    recvCycle(serverFd,data.buf,data.dataLen);
+    printf("%s",data.buf);
+    return 0;
+}
 
 int getCMD(char *arg) {
     char cmdStr[200] = {0}, buf[200] = {0};

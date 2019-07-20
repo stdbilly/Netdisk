@@ -50,6 +50,7 @@ void *threadFunc(void *p) {
                         break;
                     case LS_CMD:
                     case LS_CMD_ARG:
+                        ls_cmd(pGet->clientFd,db,&data,&ustat);
                         break;
                     case CD_CMD:
                         break;

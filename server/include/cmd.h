@@ -31,8 +31,8 @@ enum return_flag { SUCCESS = 100, FAIL, NO_USER, USER_EXIST, FILE_EXIST };
 
 
 int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat);
-int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat);
-
+int userRegister(int clientFd, MYSQL *db, pDataStream_t pData);
+int ls_cmd(int clientFd,MYSQL *db,pDataStream_t pData,pUserStat_t pustat);
 
 //char *genRandomStr(char *str, int len);
 //int getUserInfo(char *buf, pUser_t puser);

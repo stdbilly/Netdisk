@@ -38,6 +38,7 @@ enum return_flag{
 int loginWindow(int serverFd,pDataStream_t pData);
 int userLogin(int serverFd,pDataStream_t pData);
 int userRegister(int serverFd,pDataStream_t pData);
+int ls_cmd(int serverFd,char* arg);
 void printMenu();
 int getCMD(char* arg);
 

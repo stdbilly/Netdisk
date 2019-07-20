@@ -4,7 +4,8 @@
 
 #define DEBUG
 
-int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
+int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,
+              pUserStat_t pustat) {
     char name[21] = {0};
     int ret;
     recvCycle(clientFd, pData, DATAHEAD_LEN);             //接收flag
@@ -63,22 +64,22 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
         }
     }
     printf("user_verified\n");
-        pData->flag = SUCCESS;
-        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+    pData->flag = SUCCESS;
+    send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
 
-    strcpy(pustat->user.name,name);
-    char* rootDirId=findRootDir(db,name);//找到根目录id
-    strcpy(pustat->rootDirId,rootDirId);
-    strcpy(pustat->curDirId,rootDirId);
+    strcpy(pustat->user.name, name);
+    char *rootDirId = findRootDir(db, name);  //找到根目录id
+    strcpy(pustat->rootDirId, rootDirId);
+    strcpy(pustat->curDirId, rootDirId);
 #ifdef DEBUG
-        printf("username: %s,rootDirId=%s\n", name,rootDirId);
+    printf("username: %s,rootDirId=%s\n", name, rootDirId);
 #endif
     free(rootDirId);
-    rootDirId=NULL;
+    rootDirId = NULL;
     return 0;
 }
 
-int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
+int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
     User_t user;
     int ret;
     while (pData->flag == REGISTER || pData->flag == USER_EXIST) {
@@ -144,12 +145,14 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat
     fileInfo.file_size = 0;
     strcpy(fileInfo.file_md5, "");
 
-    if(!selectDB(db,"file","dir_id","-1")){
-        char query[300]="INSERT INTO file(dir_id, type, file_name, file_path) VALUES(";
-        sprintf(query,"%s %d,%d,'%s','%s')",query,-1,0,"netdisk","/netdisk");
-        printf("%s\n",query);
-        ret=mysql_query(db,query);
-        MYSQL_ERROR_CHECK(ret,"mysql_query",db);
+    if (!selectDB(db, "file", "dir_id", "-1")) {
+        char query[300] =
+            "INSERT INTO file(dir_id, type, file_name, file_path) VALUES(";
+        sprintf(query, "%s %d,%d,'%s','%s')", query, -1, 0, "netdisk",
+                "/netdisk");
+        printf("%s\n", query);
+        ret = mysql_query(db, query);
+        MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     }
 
     ret = insertUserTrans(db, &user, &fileInfo);
@@ -166,23 +169,45 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat
     pData->flag = SUCCESS;
     send(clientFd, pData, DATAHEAD_LEN, 0);
 
-    strcpy(pustat->user.name,user.name);
+    /* strcpy(pustat->user.name,user.name);
     char* rootDirId=findRootDir(db,user.name);//找到根目录id
     strcpy(pustat->rootDirId,rootDirId);
     strcpy(pustat->curDirId,rootDirId);
     free(rootDirId);
-    rootDirId=NULL;
+    rootDirId=NULL; */
     return 0;
 }
 
-/* int ls_cmd(int clientFd,pDataStream_t pData){
-    if (pData->flag==LS_CMD_ARG)
-    {
-        
+int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    int i;
+    if (pData->flag == LS_CMD_ARG) {
+        recvCycle(clientFd, pData->buf, pData->dataLen);
     }
-    
-    
-} */
+    res = selectDB(db, "file", "dir_id", pustat->curDirId);
+    if (res == NULL) {
+        pData->dataLen = 0;
+        return 0;
+    }
+    for (i = 0; i < mysql_num_rows(res); i++) {
+        row = mysql_fetch_row(res);
+        //是否是文件夹
+        if (atoi(row[2]) == 0)) {
+            sprintf(pData->buf, "%s%-10s%-5s%-20s", "d", row[3], "", row[7]);
+        } else {
+            sprintf(pData->buf, "%s%-10s%-5s%-20s", "-", row[3], row[4],
+                    row[7]);
+        }
+    }
+#ifdef DEBUG
+    printf("ls:%s\n", pData->buf);
+#endif
+    mysql_free_result(res);
+    pData->dataLen = strlen(pData->buf);
+    send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
+    return 0;
+}
 
 void sendErrMsg(int clientFd, pDataStream_t pData) {
     pData->flag = FAIL;
