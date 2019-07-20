@@ -57,6 +57,7 @@ void *threadFunc(void *p) {
                     case PUTS_CMD:
                         break;
                     case MKDIR_CMD:
+                        mkdir_cmd(pGet->clientFd,db,&data,&ustat);
                         break;
                     default:
                         break;

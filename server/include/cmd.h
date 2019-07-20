@@ -32,6 +32,11 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat);
 int userRegister(int clientFd, MYSQL *db, pDataStream_t pData);
 int ls_cmd(int clientFd,MYSQL *db,pDataStream_t pData,pUserStat_t pustat);
 int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat);
+void getFileName(char *file_name, const char *cmd_path);
+char* convert_path(MYSQL *db, const char *path, const char *rootDirId,
+                   const char *curDirId);
+int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
+              pUserStat_t pustat);
 
 //char *genRandomStr(char *str, int len);
 //int getUserInfo(char *buf, pUser_t puser);

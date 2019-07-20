@@ -37,7 +37,8 @@ int userVerify(MYSQL* db, const char* user_name, const char* password);
 MYSQL_RES* selectDB(MYSQL* db,const char* table,const char* field,const char* condition);//slect操作
 int insertUser(MYSQL* db,pUser_t puser);
 int insertUserTrans(MYSQL* db, pUser_t puser,pFileStat_t pfile);
-int insertFile(MYSQL* db, pUser_t puser,pFileStat_t pfile);
+int insertFile(MYSQL* db, char* user_name,pFileStat_t pfile);
+int insertFileTrans(MYSQL* db, pUserStat_t pustat, pFileStat_t pfile);
 int insertUserFile(MYSQL* db, char* user_id, char* file_id);
 char* findRootDir(MYSQL* db, const char* user_name);
 #endif

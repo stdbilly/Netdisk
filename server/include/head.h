@@ -76,5 +76,9 @@
         }                                                 \
     }
 
+#define PATH_LEN 200
+#define FILENAME_LEN 100
+#define QUERY_LEN 600
+
 #define DEBUG
 #endif

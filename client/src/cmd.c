@@ -43,7 +43,7 @@ menu:
         goto menu;
     }
     printf("登录成功...\n");
-    usleep(5000);
+    sleep(1);
     system("clear");
     printMenu();
     fflush(stdout);
@@ -84,6 +84,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
         recvCycle(serverFd, pData, DATAHEAD_LEN);  //接收falg
         if (pData->flag == SUCCESS) {
             printf("login success\n");
+            strcpy(pData->buf, name);
             return 0;
         } else {
             printf("login fail,plese retry\n");
@@ -131,7 +132,6 @@ int userLogin(int serverFd, pDataStream_t pData) {
             return -1;
         }
     }
-    strcpy(pData->buf, name);
     return 0;
 }
 
@@ -221,11 +221,15 @@ int userRegister(int serverFd, pDataStream_t pData) {
         return -1;
     }
     strcpy(pData->buf, name);
+#ifdef DEBUG
+        printf("name=%s\n", pData->buf);
+#endif
     return 0;
 }
 
 int ls_cmd(int serverFd,char* arg){
     DataStream_t data;
+    int i,n;
     /* if (strlen(arg))
     {
         data.dataLen=strlen(arg);
@@ -240,8 +244,13 @@ int ls_cmd(int serverFd,char* arg){
         printf("当前目录为空\n");
         return 0;
     }
-    recvCycle(serverFd,data.buf,data.dataLen);
-    printf("%s\n",data.buf);
+    n=data.dataLen;
+    for (i = 0; i < n; i++)
+    {
+        recvCycle(serverFd,&data,DATAHEAD_LEN);
+        recvCycle(serverFd,data.buf,data.dataLen);
+        printf("%s\n",data.buf);
+    }
     return 0;
 }
 
@@ -250,12 +259,32 @@ int pwd_cmd(int serverFd){
     data.flag=PWD_CMD;
     send(serverFd,&data,DATAHEAD_LEN,0);
     recvCycle(serverFd,&data,DATAHEAD_LEN);
-    recvCycle(serverFd,data.buf,data.dataLen);
-#ifdef DEBUG
-        printf("userpath:%s,pathLen=%ld,bufLen=%d\n", data.buf,strlen(data.buf),data.dataLen);
-#endif    
+    recvCycle(serverFd,data.buf,data.dataLen);   
     printf("%s\n",data.buf);
     return 0;
+}
+
+int mkdir_cmd(int serverFd,char* arg){
+    if(!strlen(arg)){
+        printf("请输入要创建的文件夹名字\n");
+    }
+    DataStream_t data;
+#ifdef DEBUG
+        printf("filename:%s,flienameLen=%ld\n",arg,strlen(arg));
+#endif     
+    data.flag=MKDIR_CMD;
+    data.dataLen=strlen(arg);
+    strcpy(data.buf,arg);
+    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    if(data.flag==SUCCESS){
+        printf("文件夹创建成功\n");
+        return 0;
+    }else{
+        recvCycle(serverFd,data.buf,data.dataLen);
+        printf("%s\n",data.buf);
+        return -1;
+    }
 }
 
 int cmdToNum(char *arg) {

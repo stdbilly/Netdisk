@@ -41,6 +41,7 @@ int userLogin(int serverFd,pDataStream_t pData);
 int userRegister(int serverFd,pDataStream_t pData);
 int ls_cmd(int serverFd,char* arg);
 int pwd_cmd(int serverFd);
+int mkdir_cmd(int serverFd,char* arg);
 void printMenu();
 int cmdToNum(char* arg);
 

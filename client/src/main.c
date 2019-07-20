@@ -32,16 +32,20 @@ int main(int argc, char* argv[]) {
     // pQue_t pq = &threadInfo.que;
     // pNode_t pNew;
     int readyFdCcount, i, ret, cmdNum;
-    char arg[200] = {0};
+    char arg[PATH_LEN]={0};
     DataStream_t data;
-    bzero(&data, sizeof(DataStream_t));
     //先登录或注册
     ret = loginWindow(serverFd, &data);
+    printf("data,buf=%s\n",data.buf);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }
-    
+
     while (1) {
+        GREEN
+        printf("%s@Netdisk:$ ",data.buf);
+        CLOSE_COLOR
+        fflush(stdout);
         readyFdCcount = epoll_wait(epfd, evs, 3, -1);
         for (i = 0; i < readyFdCcount; i++) {
             if (evs[i].data.fd == exitFds[0]) {
@@ -80,6 +84,7 @@ int main(int argc, char* argv[]) {
                     case PUTS_CMD:
                         break;
                     case MKDIR_CMD:
+                        mkdir_cmd(serverFd,arg);
                         break;
                     case -1:
                         printf("输入任意键返回...");
