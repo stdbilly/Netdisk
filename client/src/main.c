@@ -32,7 +32,6 @@ int main(int argc, char* argv[]) {
     // pQue_t pq = &threadInfo.que;
     // pNode_t pNew;
     int readyFdCcount, i, ret, cmdNum;
-    char arg[PATH_LEN]={0};
     DataStream_t data;
     //先登录或注册
     ret = loginWindow(serverFd, &data);
@@ -61,12 +60,14 @@ int main(int argc, char* argv[]) {
             } */
 
             if (evs[i].data.fd == STDIN_FILENO) {
+                char arg[PATH_LEN]={0};
                 cmdNum = cmdToNum(arg);
                 switch (cmdNum) {
                     case LS_CMD:
                         ls_cmd(serverFd, arg);
                         break;
                     case CD_CMD:
+                        cd_cmd(serverFd,arg);
                         break;
                     case PWD_CMD:
                         pwd_cmd(serverFd);

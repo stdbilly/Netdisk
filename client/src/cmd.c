@@ -267,6 +267,7 @@ int pwd_cmd(int serverFd){
 int mkdir_cmd(int serverFd,char* arg){
     if(!strlen(arg)){
         printf("请输入要创建的文件夹名字\n");
+        return -1;
     }
     DataStream_t data;
 #ifdef DEBUG
@@ -279,6 +280,31 @@ int mkdir_cmd(int serverFd,char* arg){
     recvCycle(serverFd,&data,DATAHEAD_LEN);
     if(data.flag==SUCCESS){
         printf("文件夹创建成功\n");
+        return 0;
+    }else{
+        recvCycle(serverFd,data.buf,data.dataLen);
+        printf("%s\n",data.buf);
+        return -1;
+    }
+}
+
+int cd_cmd(int serverFd,char* arg){
+    DataStream_t data;
+    data.flag=CD_CMD;
+#ifdef DEBUG
+        printf("path:%s,pathLen=%ld\n",arg,strlen(arg));
+#endif  
+    if(!strlen(arg)){
+        data.dataLen=0;
+        send(serverFd,&data,DATAHEAD_LEN,0);
+        return 0;
+    }
+    data.dataLen=strlen(arg);
+    strcpy(data.buf,arg);
+    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    if(data.flag==SUCCESS){
+        printf("success\n");
         return 0;
     }else{
         recvCycle(serverFd,data.buf,data.dataLen);

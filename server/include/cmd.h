@@ -37,6 +37,7 @@ char* convert_path(MYSQL *db, const char *path, const char *rootDirId,
                    const char *curDirId);
 int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
               pUserStat_t pustat);
+int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat);
 
 //char *genRandomStr(char *str, int len);
 //int getUserInfo(char *buf, pUser_t puser);

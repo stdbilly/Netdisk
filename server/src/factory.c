@@ -46,6 +46,7 @@ void *threadFunc(void *p) {
                         ls_cmd(pGet->clientFd,db,&data,&ustat);
                         break;
                     case CD_CMD:
+                        cd_cmd(pGet->clientFd,db,&data,&ustat);
                         break;
                     case PWD_CMD:
                         pwd_cmd(pGet->clientFd, db, &data, &ustat);
