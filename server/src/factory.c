@@ -38,23 +38,17 @@ void *threadFunc(void *p) {
                 switch (data.flag) {
                     case LOGIN:
                         ret = userLogin(pGet->clientFd, db, &data,&ustat);
-                        if (ret == -1) {
-                            goto DISCONNECT;
-                        }
                         break;
                     case REGISTER:
-                        ret = userRegister(pGet->clientFd, db, &data,&ustat);
-                        if (ret == -1) {
-                            goto DISCONNECT;
-                        }
+                        ret = userRegister(pGet->clientFd, db, &data);
                         break;
                     case LS_CMD:
-                    case LS_CMD_ARG:
                         ls_cmd(pGet->clientFd,db,&data,&ustat);
                         break;
                     case CD_CMD:
                         break;
                     case PWD_CMD:
+                        pwd_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case RM_CMD:
                         break;

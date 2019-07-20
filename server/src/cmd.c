@@ -147,9 +147,9 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
 
     if (!selectDB(db, "file", "dir_id", "-1")) {
         char query[300] =
-            "INSERT INTO file(dir_id, type, file_name, file_path) VALUES(";
-        sprintf(query, "%s %d,%d,'%s','%s')", query, -1, 0, "netdisk",
-                "/netdisk");
+            "INSERT INTO file(dir_id, id,type, file_name, file_path) VALUES(";
+        sprintf(query, "%s %d,%d,%d,'%s','%s')", query, -1,1, 0, "home",
+                "/home");
         printf("%s\n", query);
         ret = mysql_query(db, query);
         MYSQL_ERROR_CHECK(ret, "mysql_query", db);
@@ -182,18 +182,19 @@ int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     MYSQL_RES *res;
     MYSQL_ROW row;
     int i;
-    if (pData->flag == LS_CMD_ARG) {
+    /* if (pData->dataLen!=0) {
         recvCycle(clientFd, pData->buf, pData->dataLen);
-    }
+    } */
     res = selectDB(db, "file", "dir_id", pustat->curDirId);
     if (res == NULL) {
         pData->dataLen = 0;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
         return 0;
     }
     for (i = 0; i < mysql_num_rows(res); i++) {
         row = mysql_fetch_row(res);
         //是否是文件夹
-        if (atoi(row[2]) == 0)) {
+        if (atoi(row[2]) == 0) {
             sprintf(pData->buf, "%s%-10s%-5s%-20s", "d", row[3], "", row[7]);
         } else {
             sprintf(pData->buf, "%s%-10s%-5s%-20s", "-", row[3], row[4],
@@ -206,6 +207,28 @@ int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     mysql_free_result(res);
     pData->dataLen = strlen(pData->buf);
     send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
+    return 0;
+}
+
+int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat){
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    res=selectDB(db,"file","id",pustat->curDirId);    
+    row=mysql_fetch_row(res);
+    sprintf(pData->buf,"%s",row[5]+5+strlen(pustat->user.name)+1);//去掉"/home/username"
+
+    if(strlen(pData->buf)){
+        pData->dataLen=strlen(pData->buf);
+        send(clientFd,pData,pData->dataLen+DATAHEAD_LEN,0);
+    }else{
+        strcpy(pData->buf,"/");
+#ifdef DEBUG
+        printf("userpath:%s,pathLen=%ld\n", pData->buf,strlen(pData->buf));
+#endif
+        pData->dataLen=strlen(pData->buf)+1;
+        send(clientFd,pData,pData->dataLen+DATAHEAD_LEN,0);
+    }
+    mysql_free_result(res);
     return 0;
 }
 

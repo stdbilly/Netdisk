@@ -2,6 +2,9 @@
 #define __CMD_H__
 #include "head.h"
 
+#define GREEN printf("\033[36m");
+#define CLOSE_COLOR printf("\033[0m");
+
 #define DATAHEAD_LEN 8 
 
 typedef struct {
@@ -15,9 +18,7 @@ enum CMD_NO{
     NOPASS_LOGIN,
     REGISTER,
     LS_CMD,
-    LS_CMD_ARG,
     CD_CMD,
-    CD_CMD_NOARG,
     RM_CMD,
     PWD_CMD,
     PUTS_CMD,
@@ -39,7 +40,8 @@ int loginWindow(int serverFd,pDataStream_t pData);
 int userLogin(int serverFd,pDataStream_t pData);
 int userRegister(int serverFd,pDataStream_t pData);
 int ls_cmd(int serverFd,char* arg);
+int pwd_cmd(int serverFd);
 void printMenu();
-int getCMD(char* arg);
+int cmdToNum(char* arg);
 
 #endif

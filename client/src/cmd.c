@@ -43,9 +43,10 @@ menu:
         goto menu;
     }
     printf("登录成功...\n");
-    sleep(1);
+    usleep(5000);
     system("clear");
     printMenu();
+    fflush(stdout);
     return 0;
 }
 
@@ -225,33 +226,43 @@ int userRegister(int serverFd, pDataStream_t pData) {
 
 int ls_cmd(int serverFd,char* arg){
     DataStream_t data;
-    if (strlen(arg))
+    /* if (strlen(arg))
     {
-        data.flag=LS_CMD_ARG;
         data.dataLen=strlen(arg);
         strcpy(data.buf,arg);
         send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
-    }
+    } */
     data.flag=LS_CMD;
     send(serverFd,&data,DATAHEAD_LEN,0);
     recvCycle(serverFd,&data,DATAHEAD_LEN);
     if (data.dataLen==0)
     {
+        printf("当前目录为空\n");
         return 0;
     }
     recvCycle(serverFd,data.buf,data.dataLen);
-    printf("%s",data.buf);
+    printf("%s\n",data.buf);
     return 0;
 }
 
-int getCMD(char *arg) {
+int pwd_cmd(int serverFd){
+    DataStream_t data;
+    data.flag=PWD_CMD;
+    send(serverFd,&data,DATAHEAD_LEN,0);
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    recvCycle(serverFd,data.buf,data.dataLen);
+#ifdef DEBUG
+        printf("userpath:%s,pathLen=%ld,bufLen=%d\n", data.buf,strlen(data.buf),data.dataLen);
+#endif    
+    printf("%s\n",data.buf);
+    return 0;
+}
+
+int cmdToNum(char *arg) {
     char cmdStr[200] = {0}, buf[200] = {0};
     int cmdNum = -1;
     read(STDIN_FILENO, buf, sizeof(buf));
     buf[strlen(buf) - 1] = '\0';
-#ifdef DEBUG
-    printf("buf=%s\n", buf);
-#endif
     size_t i = 0, j = 0;
     for (i = 0; i < strlen(buf); i++) {
         if (isalpha(buf[i])) {
@@ -268,9 +279,6 @@ int getCMD(char *arg) {
             }
         }
     }
-#ifdef DEBUG
-    printf("cmdStr=%s,arg=%s\n", cmdStr, arg);
-#endif
 
     //取出操作对应的字符串,分析输入的命令
     if (!strcmp(cmdStr, "cd")) {

@@ -26,21 +26,21 @@ int main(int argc, char* argv[]) {
     Factory_t threadInfo;
     factoryInit(&serverFd, &threadInfo);
     factoryStart(&threadInfo);
-    //epollAdd(epfd, serverFd);
+    // epollAdd(epfd, serverFd);
     epollAdd(epfd, exitFds[0]);
     epollAdd(epfd, STDIN_FILENO);
-    //pQue_t pq = &threadInfo.que;
-    //pNode_t pNew;
+    // pQue_t pq = &threadInfo.que;
+    // pNode_t pNew;
     int readyFdCcount, i, ret, cmdNum;
     char arg[200] = {0};
     DataStream_t data;
-
+    bzero(&data, sizeof(DataStream_t));
     //先登录或注册
-    ret = loginWindow(serverFd,&data);
+    ret = loginWindow(serverFd, &data);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }
-
+    
     while (1) {
         readyFdCcount = epoll_wait(epfd, evs, 3, -1);
         for (i = 0; i < readyFdCcount; i++) {
@@ -57,14 +57,15 @@ int main(int argc, char* argv[]) {
             } */
 
             if (evs[i].data.fd == STDIN_FILENO) {
-                cmdNum = getCMD(arg);
+                cmdNum = cmdToNum(arg);
                 switch (cmdNum) {
                     case LS_CMD:
-                        ls_cmd(serverFd)
+                        ls_cmd(serverFd, arg);
                         break;
                     case CD_CMD:
                         break;
                     case PWD_CMD:
+                        pwd_cmd(serverFd);
                         break;
                     case RM_CMD:
                         break;

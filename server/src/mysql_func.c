@@ -28,7 +28,7 @@ int connectDB(MYSQL** db) {
 char* findRootDir(MYSQL* db, const char* user_name) {
     MYSQL_RES* res;
     MYSQL_ROW row;
-    char path[300] = "/netdisk/";
+    char path[300] = "/home/";
     strcat(path, user_name);
     res = selectDB(db, "file", "file_path", path);
     char* root_dir;
