@@ -4,34 +4,43 @@
 
 #define DEBUG
 
-int loginWindow(int serverFd,pDataStream_t pData) {
+int loginWindow(int serverFd, pDataStream_t pData) {
     int option, ret;
-login:
+menu:
     system("clear");
     printf("\n1.登录\n2.注册\n3.退出\n\n请输入对应的数字(1-3)\n");
     scanf("%d", &option);
     switch (option) {
         case 1:
+        login:
             system("clear");
-            ret = userLogin(serverFd,pData);
+            ret = userLogin(serverFd, pData);
             break;
         case 2:
             system("clear");
-            ret = userRegister(serverFd,pData);
+            ret = userRegister(serverFd, pData);
+            if (ret == 0) {
+                printf("输入任意键继续...");
+                getchar();
+                getchar();
+                goto login;
+            }
             break;
         case 3:
             return -1;
         default:
             printf("输入有误，请重新输入...\n");
-            sleep(1);
-            goto login;
+            printf("输入任意键返回...");
+            getchar();
+            getchar();
+            goto menu;
             break;
     }
     if (ret == -1) {
         printf("输入任意键返回...");
         getchar();
         getchar();
-        goto login;
+        goto menu;
     }
     printf("登录成功...\n");
     sleep(1);
@@ -40,7 +49,7 @@ login:
     return 0;
 }
 
-int userLogin(int serverFd,pDataStream_t pData) {
+int userLogin(int serverFd, pDataStream_t pData) {
     int ret;
     char name[21] = {0};
     pData->flag = LOGIN;
@@ -116,17 +125,16 @@ int userLogin(int serverFd,pDataStream_t pData) {
         recvCycle(serverFd, pData, DATAHEAD_LEN);
         if (pData->flag == SUCCESS) {
             printf("login success\n");
-            return 0;
         } else {
             printf("login fail,plese retry\n");
             return -1;
         }
     }
-
+    strcpy(pData->buf, name);
     return 0;
 }
 
-int userRegister(int serverFd,pDataStream_t pData) {
+int userRegister(int serverFd, pDataStream_t pData) {
     int ret;
     char name[NAME_LEN + 1] = {0}, *passwd;
     bzero(pData, sizeof(DataStream_t));
@@ -182,7 +190,8 @@ int userRegister(int serverFd,pDataStream_t pData) {
     en_pass = NULL;
     pData->dataLen = SER_EN_LEN;
 #ifdef DEBUG
-    printf("pData->dataLen=%ld,SER_EN_LEN=%d\n", strlen(pData->buf), SER_EN_LEN);
+    printf("pData->dataLen=%ld,SER_EN_LEN=%d\n", strlen(pData->buf),
+           SER_EN_LEN);
 #endif
     ret = send(serverFd, pData, DATAHEAD_LEN + pData->dataLen, 0);
 #ifdef DEBUG
@@ -210,16 +219,28 @@ int userRegister(int serverFd,pDataStream_t pData) {
         }
         return -1;
     }
+    strcpy(pData->buf, name);
     return 0;
 }
+
+/* int ls_cmd(int serverFd,char* arg){
+    DataStream_t data;
+    if (strlen(arg))
+    {
+        data.flag=LS_CMD_ARG;
+    }
+    data.flag=LS_CMD;
+    send(serverFd,&data,DATAHEAD_LEN,0);
+
+} */
 
 int getCMD(char *arg) {
     char cmdStr[200] = {0}, buf[200] = {0};
     int cmdNum = -1;
-    read(STDIN_FILENO,buf,sizeof(buf));
+    read(STDIN_FILENO, buf, sizeof(buf));
     buf[strlen(buf) - 1] = '\0';
 #ifdef DEBUG
-    printf("buf=%s\n",buf);
+    printf("buf=%s\n", buf);
 #endif
     size_t i = 0, j = 0;
     for (i = 0; i < strlen(buf); i++) {
@@ -238,7 +259,7 @@ int getCMD(char *arg) {
         }
     }
 #ifdef DEBUG
-    printf("cmdStr=%s,arg=%s\n",cmdStr,arg);
+    printf("cmdStr=%s,arg=%s\n", cmdStr, arg);
 #endif
 
     //取出操作对应的字符串,分析输入的命令

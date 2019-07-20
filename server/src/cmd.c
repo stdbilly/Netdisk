@@ -11,7 +11,7 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat) {
     if (pData->flag == NOPASS_LOGIN) {                    //无密码登录
         recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
         strcpy(name, pData->buf);
-        
+
         ret = recvRanStr(clientFd, pData);
         if (ret == -1) {
             printf("ranStr verify failed\n");
@@ -174,6 +174,15 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData,pUserStat_t pustat
     rootDirId=NULL;
     return 0;
 }
+
+/* int ls_cmd(int clientFd,pDataStream_t pData){
+    if (pData->flag==LS_CMD_ARG)
+    {
+        
+    }
+    
+    
+} */
 
 void sendErrMsg(int clientFd, pDataStream_t pData) {
     pData->flag = FAIL;

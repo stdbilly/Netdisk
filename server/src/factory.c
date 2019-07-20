@@ -49,6 +49,7 @@ void *threadFunc(void *p) {
                         }
                         break;
                     case LS_CMD:
+                    case LS_CMD_ARG:
                         break;
                     case CD_CMD:
                         break;
