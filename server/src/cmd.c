@@ -297,9 +297,12 @@ int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     row = mysql_fetch_row(res);
     sprintf(pData->buf, "%s",
             row[5] + 5 + strlen(pustat->user.name) + 1);  //去掉"/home/username"
-    pData->buf[strlen(row[5])-1]='\0';
+#ifdef DEBUG
+    printf("buf=%s,bufLen=%ld\n", pData->buf, strlen(pData->buf));
+#endif
+
     if (strlen(pData->buf)) {
-        pData->dataLen = strlen(pData->buf);
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     } else {
         strcpy(pData->buf, "/");
