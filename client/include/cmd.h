@@ -43,6 +43,7 @@ int ls_cmd(int serverFd,char* arg);
 int pwd_cmd(int serverFd);
 int mkdir_cmd(int serverFd,char* arg);
 int cd_cmd(int serverFd,char* arg);
+int rm_cmd(int serverFd,char* arg);
 void printMenu();
 int cmdToNum(char* arg);
 

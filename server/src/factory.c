@@ -52,6 +52,7 @@ void *threadFunc(void *p) {
                         pwd_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case RM_CMD:
+                        rm_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case GETS_CMD:
                         break;

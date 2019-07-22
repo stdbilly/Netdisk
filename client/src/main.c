@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
                         pwd_cmd(serverFd);
                         break;
                     case RM_CMD:
+                        rm_cmd(serverFd,arg);
                         break;
                     case HELP_CMD:
                         system("clear");

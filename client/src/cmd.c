@@ -313,6 +313,34 @@ int cd_cmd(int serverFd,char* arg){
     }
 }
 
+int rm_cmd(int serverFd,char* arg){
+    if(!strlen(arg)){
+        printf("请输入要创建的文件夹名字\n");
+        return -1;
+    }
+    DataStream_t data;
+#ifdef DEBUG
+        printf("filename:%s,flienameLen=%ld\n",arg,strlen(arg));
+#endif     
+    data.flag=RM_CMD;
+    data.dataLen=strlen(arg);
+    strcpy(data.buf,arg);
+    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
+    
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+#ifdef DEBUG
+        printf("data.flag=%d\n",data.flag);
+#endif  
+    if(data.flag==SUCCESS){
+        printf("文件或文件夹删除成功\n");
+        return 0;
+    }else{
+        recvCycle(serverFd,data.buf,data.dataLen);
+        printf("%s\n",data.buf);
+        return -1;
+    }
+}
+
 int cmdToNum(char *arg) {
     char cmdStr[200] = {0}, buf[200] = {0};
     int cmdNum = -1;
