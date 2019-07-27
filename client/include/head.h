@@ -29,6 +29,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <sys/epoll.h>
 #include <sys/uio.h>
@@ -46,5 +47,7 @@
 
 #define NAME_LEN 20
 #define PATH_LEN 200
+#define FILENAME_LEN 100
+#define MD5_LEN 150
 
 #endif

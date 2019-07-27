@@ -510,6 +510,45 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     return 0;
 }
 
+int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat){
+    MYSQL_RES* res;
+    char* abs_path;
+    char file_name[FILENAME_LEN];
+
+    recvCycle(clientFd, pData->buf,pData->dataLen);//接收文件名
+    strcpy(file_name,pData->buf);
+#ifdef DEBUG
+        printf("file_name:%s\n",file_name);
+#endif
+
+    abs_path = convert_path(db, file_name, pustat->rootDirId, pustat->curDirId);
+    if (abs_path == NULL)
+    {
+        pData->flag = FAIL;
+        strcpy(pData->buf, "路径不合法");
+        pData->dataLen = strlen(pData->buf);
+        send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
+        return -1;
+    }
+    //检查是否有同名文件
+    res=selectDB(db,"file","file_path",abs_path,0);
+    free(abs_path);
+    abs_path=NULL;
+    if(res){
+        pData->flag=FILE_EXIST;
+        strcpy(pData->buf,"文件已存在")；
+        pData->dataLen = strlen(pData->buf);
+        send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
+        return -1;
+    }
+    pData->flag=SUCCESS;
+    send(clientFd,pData,DATAHEAD_LEN,0);
+
+    FileStat_t fileInfo;
+    strcpy(fileInfo.file_name,file_name);
+    recv_file(clientFd, db, pustat,&fileInfo);
+}
+
 void sendErrMsg(int clientFd, pDataStream_t pData) {
     pData->flag = FAIL;
     pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);

@@ -29,20 +29,20 @@ int main(int argc, char* argv[]) {
     // epollAdd(epfd, serverFd);
     epollAdd(epfd, exitFds[0]);
     epollAdd(epfd, STDIN_FILENO);
-    // pQue_t pq = &threadInfo.que;
-    // pNode_t pNew;
+    pQue_t pq = &threadInfo.que;
+    pNode_t pNew;
     int readyFdCcount, i, ret, cmdNum;
     DataStream_t data;
     //先登录或注册
     ret = loginWindow(serverFd, &data);
-    printf("data,buf=%s\n",data.buf);
+    printf("data,buf=%s\n", data.buf);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }
 
     while (1) {
         GREEN
-        printf("%s@Netdisk:$ ",data.buf);
+        printf("%s@Netdisk:$ ", data.buf);
         CLOSE_COLOR
         fflush(stdout);
         readyFdCcount = epoll_wait(epfd, evs, 3, -1);
@@ -60,20 +60,20 @@ int main(int argc, char* argv[]) {
             } */
 
             if (evs[i].data.fd == STDIN_FILENO) {
-                char arg[PATH_LEN]={0};
+                char arg[PATH_LEN] = {0};
                 cmdNum = cmdToNum(arg);
                 switch (cmdNum) {
                     case LS_CMD:
                         ls_cmd(serverFd, arg);
                         break;
                     case CD_CMD:
-                        cd_cmd(serverFd,arg);
+                        cd_cmd(serverFd, arg);
                         break;
                     case PWD_CMD:
                         pwd_cmd(serverFd);
                         break;
                     case RM_CMD:
-                        rm_cmd(serverFd,arg);
+                        rm_cmd(serverFd, arg);
                         break;
                     case HELP_CMD:
                         system("clear");
@@ -84,9 +84,17 @@ int main(int argc, char* argv[]) {
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:
+                        pNew = (pNode_t)calloc(1, sizeof(Node_t));
+                        pNew->serverFd = serverFd;
+                        strcpy(pNew->fileName,arg);
+                        pthread_mutex_lock(&pq->mutex);
+                        queInsert(pq, pNew);
+                        pthread_mutex_unlock(&pq->mutex);
+                        pthread_cond_signal(&threadInfo.cond);
+                        printf("开始发送文件\n");
                         break;
                     case MKDIR_CMD:
-                        mkdir_cmd(serverFd,arg);
+                        mkdir_cmd(serverFd, arg);
                         break;
                     case -1:
                         printf("输入任意键返回...");

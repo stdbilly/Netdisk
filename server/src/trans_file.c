@@ -29,23 +29,72 @@ int send_file(int clientFd) {
     return 0;
 }
 
-int recv_file(int clientFd) {
-    int fd, dataLen, ret;
-    char buf[1000] = {0};
-    recvCycle(clientFd, &dataLen, 4);
-    recvCycle(clientFd, buf, dataLen);  //接收文件名
-    fd = open(buf, O_RDWR | O_CREAT, 0666);
-    ERROR_CHECK(fd, -1, "open");
+int recv_file(int clientFd, MYSQL *db, pUserStat_t pustat,pFileStat_t pfile) {
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    int ret;
+    DataStream_t data;
+    char* abs_path;
+    char file_name[FILENAME_LEN];
+    char file_md5[MD5_LEN];
+    //接收md5
+    recvCycle(clientFd,&data,DATAHEAD_LEN);
+    if(ret){
+        return -1;
+    }
+    recvCycle(clientFd, data->buf,data->dataLen);
+    if(ret){
+        return -1;
+    }
+    strcpy(pfile->file_md5,data.buf);
+
+    res=selectDB(db,"file","file_md5",pfile->file_md5,0);
+    if(res){ //文件已存在
+        data.flag=FILE_EXIST;
+        send(clientFd,&data,DATAHEAD_LEN,0);//发送标志
+        row=mysql_fetch_row(res);
+        mysql_free_result(res);
+
+        strcpy(pfile->dir_id,pustat->curDirId);
+        strcpy(pfile->file_name,row[3]);
+        pfile->file_size=atol(row[4]);
+        pfile->type=1;
+        ret=insertFileTrans(db,pustat,pfile);
+        if(ret){
+            data.flag=FAIL;
+            send(clientFd,&data,DATAHEAD_LEN,0);
+            printf("文件插入数据库失败\n");
+            return -1;
+        }
+        data.flag=SUCCESS;
+        send(clientFd,&data,DATAHEAD_LEN,0);
+        return 0;
+    }
+    
+    //接收文件
+    char file_path[PATH_LEN]="netdisk/";
+    strcat(file_path,file_md5);
+    int fd = open(path_name, O_CREAT|O_RDWR, 0666);
+    if (fd == -1)
+    {
+        perror("open");
+        return -1;
+    }
+    
     //接收文件大小
-    off_t fileSize, download = 0, lastDownload = 0, slice;
-    recvCycle(clientFd, &dataLen, 4);
-    recvCycle(clientFd, &fileSize, dataLen);
+    off_t fileSize, download = 0 ;
+    recvCycle(clientFd, &data, DATAHEAD_LEN);
+    if(ret){
+        return -1;
+    }
+    recvCycle(clientFd, &fileSize, data.dataLen);
+    if(ret){
+        return -1;
+    }
     printf("fileSize=%ld\n", fileSize);
     int fds[2];
     pipe(fds);
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    slice = fileSize / 1000;
+    
     while (download < fileSize) {
         ret = splice(clientFd, NULL, fds[1], NULL, 65536,
                      SPLICE_F_MOVE | SPLICE_F_MORE);
@@ -55,19 +104,15 @@ int recv_file(int clientFd) {
         ERROR_CHECK(ret, -1, "splice");
         splice(fds[0], NULL, fd, NULL, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
-        if (download - lastDownload >= slice) {
-            printf("%5.2f%%\r", (float)download / fileSize * 100);
-            fflush(stdout);
-            lastDownload = download;
-        }
     }
     if (download == fileSize) {
-        printf("100.00%%\n");
+        data.flag=SUCCESS;
+        send(clientFd,&data,DATAHEAD_LEN);
+    }else{
+        data.flag=FAIL;
+        send(clientFd,&data,DATAHEAD_LEN);
     }
-    gettimeofday(&end, NULL);
-    printf("donload success, use time=%ld\n",
-           (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
-    close(fd);
+    
     return 0;
 }
 
@@ -182,13 +227,13 @@ int send_cycle(int sfd, const char* data, int send_len) {
     while (total < send_len) {
         ret = send(sfd, data + total, send_len - total, 0);
         if (ret == -1) {
-#ifdef _DEBUG
+#ifdef DEBUG
             printf("transmission interrupted\n");
 #endif
             return -1;
         }
         if (ret == 0) {
-#ifdef _DEBUG
+#ifdef DEBUG
             printf("transmission closed\n");
 #endif
             return -1;

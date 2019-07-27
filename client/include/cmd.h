@@ -36,7 +36,6 @@ enum return_flag{
     FILE_EXIST 
 };
 
-int loginWindow(int serverFd,pDataStream_t pData);
 int userLogin(int serverFd,pDataStream_t pData);
 int userRegister(int serverFd,pDataStream_t pData);
 int ls_cmd(int serverFd,char* arg);
@@ -44,7 +43,11 @@ int pwd_cmd(int serverFd);
 int mkdir_cmd(int serverFd,char* arg);
 int cd_cmd(int serverFd,char* arg);
 int rm_cmd(int serverFd,char* arg);
+int puts_cmd(int serverFd, char* arg);
+
+int loginWindow(int serverFd,pDataStream_t pData);
 void printMenu();
 int cmdToNum(char* arg);
+int checkConnect(int serverFd);
 
 #endif

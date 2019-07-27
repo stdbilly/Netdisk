@@ -4,6 +4,8 @@
 
 typedef struct node{
     int serverFd;
+    int flag;
+    char filePath[PATH_LEN];
     struct node* pNext;
 }Node_t,*pNode_t;
 

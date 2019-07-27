@@ -4,25 +4,57 @@
 
 #define DEBUG
 
-#define FILENAME "../pData/44.day10-项目讲解.avi"
-
-typedef struct {
+/* typedef struct {
     int pDataLen;
     char buf[1000];
-} fileInfo_t;
+} fileInfo_t; */
 
 int putsFile(int serverFd,char* filePath) {
-    fileInfo_t file;
+    int fd = open(filePath, O_RDWR);
+    if(fd==-1){
+        printf("文件不存在\n");
+        return -1;
+    }
+    DataStream_t data;
     int ret;
-    file.pDataLen = strlen(filePath);
-    strcpy(file.buf, FILENAME);
-    send(serverFd, &file, 4 + file.pDataLen, 0);  //发送文件名
-    int fd = open(FILENAME, O_RDWR);
+
+    printf("上传中... %5.2f%%\r",0.0);
+    fflush(stdout);
+
+    //发送md5
+    char file_md5[MD5_LEN] = {0};
+    ret = compute_file_md5(fd, file_md5);
+    if(ret)
+    {
+        return -1;
+    }
+    strcpy(data.buf, file_md5);
+    data.dataLen=strlen(data.buf);
+    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
+    //服务器检查文件是否存在
+    //接收flag
+    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    if(data.flag==FILE_EXIST){
+        recvCycle(serverFd,&data,DATAHEAD_LEN);
+        if(data.dataLen==SUCCESS){
+            printf("上传中... 100%%\n");
+            printf("上传成功\n");
+            return 0;
+        }else{
+            printf("上传失败\n");
+            return -1;
+        }
+    }else{
+        lseek(fd, 0, SEEK_SET);
+    }
+
+
+
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
-    file.pDataLen = sizeof(buf.st_size);
-    memcpy(file.buf, &buf.st_size, file.pDataLen);
-    send(serverFd, &file, 4 + file.pDataLen, 0);  //发送文件大小
+    data.dataLen = sizeof(buf.st_size);
+    memcpy(data.buf, &buf.st_size, data.dataLen);
+    send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
     ret = sendfile(serverFd, fd, NULL, buf.st_size);
     printf("sendflie ret=%d\n", ret);

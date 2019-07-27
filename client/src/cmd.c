@@ -94,7 +94,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
         pData->dataLen = strlen(pData->buf);
         send(serverFd, pData, pData->dataLen + DATAHEAD_LEN, 0);  //发送用户名
 
-        char *password;
+        char* password;
         password = getpass("请输入密码:");
 
         ret = sendRanStr(serverFd, pData);  //发送随机字符串
@@ -103,7 +103,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
             return -1;
         }
         //发送加密后的密码
-        char *en_pass = rsa_encrypt(password);
+        char* en_pass = rsa_encrypt(password);
         free(password);
         password = NULL;
         if (en_pass == NULL) {
@@ -179,7 +179,7 @@ int userRegister(int serverFd, pDataStream_t pData) {
     sendPubKey(serverFd, name);
 
     //用server的公钥加密密码，并发送给server
-    char *en_pass = rsa_encrypt(passwd);
+    char* en_pass = rsa_encrypt(passwd);
     free(passwd);
     passwd = NULL;
     if (en_pass == NULL) {
@@ -222,126 +222,191 @@ int userRegister(int serverFd, pDataStream_t pData) {
     }
     strcpy(pData->buf, name);
 #ifdef DEBUG
-        printf("name=%s\n", pData->buf);
+    printf("name=%s\n", pData->buf);
 #endif
     return 0;
 }
 
-int ls_cmd(int serverFd,char* arg){
+int ls_cmd(int serverFd, char* arg) {
     DataStream_t data;
-    int i,n;
+    int i, n;
     /* if (strlen(arg))
     {
         data.dataLen=strlen(arg);
         strcpy(data.buf,arg);
         send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
     } */
-    data.flag=LS_CMD;
-    send(serverFd,&data,DATAHEAD_LEN,0);
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
-    if (data.dataLen==0)
-    {
+    data.flag = LS_CMD;
+    send(serverFd, &data, DATAHEAD_LEN, 0);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.dataLen == 0) {
         printf("当前目录为空\n");
         return 0;
     }
-    n=data.dataLen;
-    for (i = 0; i < n; i++)
-    {
-        recvCycle(serverFd,&data,DATAHEAD_LEN);
-        recvCycle(serverFd,data.buf,data.dataLen);
-        printf("%s\n",data.buf);
+    n = data.dataLen;
+    for (i = 0; i < n; i++) {
+        recvCycle(serverFd, &data, DATAHEAD_LEN);
+        recvCycle(serverFd, data.buf, data.dataLen);
+        printf("%s\n", data.buf);
     }
     return 0;
 }
 
-int pwd_cmd(int serverFd){
+int pwd_cmd(int serverFd) {
     DataStream_t data;
-    data.flag=PWD_CMD;
-    send(serverFd,&data,DATAHEAD_LEN,0);
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
-    recvCycle(serverFd,data.buf,data.dataLen);   
-    printf("%s\n",data.buf);
+    data.flag = PWD_CMD;
+    send(serverFd, &data, DATAHEAD_LEN, 0);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    recvCycle(serverFd, data.buf, data.dataLen);
+    printf("%s\n", data.buf);
     return 0;
 }
 
-int mkdir_cmd(int serverFd,char* arg){
-    if(!strlen(arg)){
+int mkdir_cmd(int serverFd, char* arg) {
+    if (!strlen(arg)) {
         printf("请输入要创建的文件夹名字\n");
         return -1;
     }
     DataStream_t data;
 #ifdef DEBUG
-        printf("filename:%s,flienameLen=%ld\n",arg,strlen(arg));
-#endif     
-    data.flag=MKDIR_CMD;
-    data.dataLen=strlen(arg);
-    strcpy(data.buf,arg);
-    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
-    if(data.flag==SUCCESS){
+    printf("filename:%s,flienameLen=%ld\n", arg, strlen(arg));
+#endif
+    data.flag = MKDIR_CMD;
+    data.dataLen = strlen(arg);
+    strcpy(data.buf, arg);
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.flag == SUCCESS) {
         printf("文件夹创建成功\n");
         return 0;
-    }else{
-        recvCycle(serverFd,data.buf,data.dataLen);
-        printf("%s\n",data.buf);
+    } else {
+        recvCycle(serverFd, data.buf, data.dataLen);
+        printf("%s\n", data.buf);
         return -1;
     }
 }
 
-int cd_cmd(int serverFd,char* arg){
+int cd_cmd(int serverFd, char* arg) {
     DataStream_t data;
-    data.flag=CD_CMD;
+    data.flag = CD_CMD;
 #ifdef DEBUG
-        printf("path:%s,pathLen=%ld\n",arg,strlen(arg));
-#endif  
-    if(!strlen(arg)){
-        data.dataLen=0;
-        send(serverFd,&data,DATAHEAD_LEN,0);
+    printf("path:%s,pathLen=%ld\n", arg, strlen(arg));
+#endif
+    if (!strlen(arg)) {
+        data.dataLen = 0;
+        send(serverFd, &data, DATAHEAD_LEN, 0);
         return 0;
     }
-    data.dataLen=strlen(arg);
-    strcpy(data.buf,arg);
-    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
-    if(data.flag==SUCCESS){
+    data.dataLen = strlen(arg);
+    strcpy(data.buf, arg);
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.flag == SUCCESS) {
         printf("success\n");
         return 0;
-    }else{
-        recvCycle(serverFd,data.buf,data.dataLen);
-        printf("%s\n",data.buf);
+    } else {
+        recvCycle(serverFd, data.buf, data.dataLen);
+        printf("%s\n", data.buf);
         return -1;
     }
 }
 
-int rm_cmd(int serverFd,char* arg){
-    if(!strlen(arg)){
+int rm_cmd(int serverFd, char* arg) {
+    if (!strlen(arg)) {
         printf("请输入要创建的文件夹名字\n");
         return -1;
     }
     DataStream_t data;
 #ifdef DEBUG
-        printf("filename:%s,flienameLen=%ld\n",arg,strlen(arg));
-#endif     
-    data.flag=RM_CMD;
-    data.dataLen=strlen(arg);
-    strcpy(data.buf,arg);
-    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
-    
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
+    printf("filename:%s,flienameLen=%ld\n", arg, strlen(arg));
+#endif
+    data.flag = RM_CMD;
+    data.dataLen = strlen(arg);
+    strcpy(data.buf, arg);
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
 #ifdef DEBUG
-        printf("data.flag=%d\n",data.flag);
-#endif  
-    if(data.flag==SUCCESS){
+    printf("data.flag=%d\n", data.flag);
+#endif
+    if (data.flag == SUCCESS) {
         printf("文件或文件夹删除成功\n");
         return 0;
-    }else{
-        recvCycle(serverFd,data.buf,data.dataLen);
-        printf("%s\n",data.buf);
+    } else {
+        recvCycle(serverFd, data.buf, data.dataLen);
+        printf("%s\n", data.buf);
         return -1;
     }
 }
 
-int cmdToNum(char *arg) {
+int puts_cmd(int serverFd, char* arg) {
+    if (!strlen(arg)) {
+        printf("请输入文件名\n");
+        return -1;
+    }
+    int ret;
+    //检查本地是否有此文件
+    struct stat buf;
+    if (stat(arg, &buf)) {
+        printf("文件不存在\n");
+        return -1;
+    }
+
+    char file_name[FILENAME_LEN] = {0};
+    char file_dir[PATH_LEN] = {0};
+    int i = 0;
+    i = strlen(arg);
+    //得到文件名和所在路径
+    while (arg[i] != '/' && i != -1) {
+        i--;
+    }
+    if (i == -1) {
+        file_dir[0] = '.';
+    } else {
+        int j = 0;
+        while (j != i) {
+            file_dir[j] = arg[j];
+            j++;
+        }
+    }
+    i++;
+    int k = 0;
+    while (arg[i] != '\0') {
+        file_name[k++] = arg[i++];
+    }
+    //发送文件名，服务器检查是否有同名文件
+    DataStream_t data;
+    data.flag = PUTS_CMD;
+    data.dataLen = strlen(file_name);
+    strcpy(data.buf, arg);
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+    //接收确认信息
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.flag != SUCCESS) {
+        recvCycle(serverFd, data.buf, data.dataLen);
+        printf("%s", data.buf);
+        return -1;
+    }
+
+    char cur_path[PATH_LEN];
+    getcwd(cur_path, sizeof(cur_path));
+
+    if (S_ISDIR(buf.st_mode)) {
+        printf("暂时不支持上传文件夹～\n");
+    } else {
+        /* if (chdir(file_dir)) {
+            printf("无法打开文件路径\n");
+            chdir(cur_path);
+            close(serverFd);
+            return -1;
+        } */
+        ret=putsFile(serverFd,arg);
+
+
+    }
+}
+
+int cmdToNum(char* arg) {
     char cmdStr[200] = {0}, buf[200] = {0};
     int cmdNum = -1;
     read(STDIN_FILENO, buf, sizeof(buf));
@@ -388,6 +453,19 @@ int cmdToNum(char *arg) {
     }
 
     return cmdNum;
+}
+
+int checkConnect(int serverFd) {
+    struct tcp_info info;
+    int len = sizeof(info);
+    getsockopt(serverFd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t*)&len);
+    if ((info.tcpi_state == TCP_ESTABLISHED)) {
+        printf("已连接");
+        return 0;
+    } else {
+        printf("断开连接");
+        return -1;
+    }
 }
 
 void printMenu() {
