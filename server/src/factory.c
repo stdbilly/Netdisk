@@ -55,6 +55,10 @@ void *threadFunc(void *p) {
                         rm_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case GETS_CMD:
+                        ret=gets_cmd(pGet->clientFd,db,&data,&ustat);
+                        if(ret){
+                            goto DISCONNECT;
+                        }
                         break;
                     case PUTS_CMD:
                         ret=puts_cmd(pGet->clientFd,db,&data,&ustat);

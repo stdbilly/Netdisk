@@ -49,6 +49,8 @@ server
 *.cmd
 .tmp_versions/
 .vscode/
+client/downloads/
+server/netdisk/
 .key
 modules.order
 Module.symvers

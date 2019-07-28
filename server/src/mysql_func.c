@@ -239,76 +239,6 @@ int insertUser(MYSQL* db, pUser_t puser) {
     return 0;
 }
 
-int modifyDB(MYSQL* db, char* cmd) {
-    int ret;
-    ret = mysql_query(db, cmd);
-    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("modify database success\n");
-    return 0;
-}
-
-int queryDB(MYSQL* db, char* cmd) {
-    int ret, i, fieldsNum;
-    MYSQL_RES* res;
-    MYSQL_ROW row;
-    ret = mysql_query(db, cmd);
-    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("query ret=%d\n", ret);
-    res = mysql_use_result(db);
-    if (res) {
-        if ((row = mysql_fetch_row(res)) == NULL) {  //没有查询到数据
-            printf("empty set\n");
-            mysql_free_result(res);
-            return -1;
-        } else {  // mysql_fetch_row(res)已经取出了一行，如果有数据就要打印
-            fieldsNum = mysql_num_fields(res);
-            for (i = 0; i < fieldsNum; i++) {
-                printf("%8s ", row[i]);
-            }
-            printf("\n");
-        }
-        while ((row = mysql_fetch_row(res)) != NULL) {
-            for (i = 0; i < fieldsNum; i++) {
-                printf("%8s ", row[i]);
-            }
-            printf("\n");
-        }
-    } else {
-        printf("result is NULL\n");
-        mysql_free_result(res);
-        return -1;
-    }
-    mysql_free_result(res);
-    return 0;
-}
-
-int queryUser(MYSQL* db, char* cmd, pUser_t puser) {
-    int ret;
-    MYSQL_RES* res;
-    MYSQL_ROW row;
-    ret = mysql_query(db, cmd);
-    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("query ret=%d\n", ret);
-    res = mysql_use_result(db);
-    if (res) {
-        if ((row = mysql_fetch_row(res)) != NULL) {
-            strcpy(puser->name, row[1]);
-            strcpy(puser->password, row[3]);
-            printf("queryUser success\n");
-        } else {  //没有查询到数据
-            printf("empty set\n");
-            mysql_free_result(res);
-            return -1;
-        }
-    } else {
-        printf("result is NULL\n");
-        mysql_free_result(res);
-        return -1;
-    }
-    mysql_free_result(res);
-    return 0;
-}
-
 int deleteUserFile(MYSQL* db, const char* user_id, const char* file_id) {
     char query[QUERY_LEN];
     sprintf(query, "DELETE FROM user_file WHERE user_id = %s AND file_id = %s",
@@ -403,3 +333,73 @@ int updateCurDirId(MYSQL* db, char* user_name,char* curDirId){
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     return 0;
 }
+
+/* int modifyDB(MYSQL* db, char* cmd) {
+    int ret;
+    ret = mysql_query(db, cmd);
+    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
+    printf("modify database success\n");
+    return 0;
+}
+
+int queryDB(MYSQL* db, char* cmd) {
+    int ret, i, fieldsNum;
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    ret = mysql_query(db, cmd);
+    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
+    printf("query ret=%d\n", ret);
+    res = mysql_use_result(db);
+    if (res) {
+        if ((row = mysql_fetch_row(res)) == NULL) {  //没有查询到数据
+            printf("empty set\n");
+            mysql_free_result(res);
+            return -1;
+        } else {  // mysql_fetch_row(res)已经取出了一行，如果有数据就要打印
+            fieldsNum = mysql_num_fields(res);
+            for (i = 0; i < fieldsNum; i++) {
+                printf("%8s ", row[i]);
+            }
+            printf("\n");
+        }
+        while ((row = mysql_fetch_row(res)) != NULL) {
+            for (i = 0; i < fieldsNum; i++) {
+                printf("%8s ", row[i]);
+            }
+            printf("\n");
+        }
+    } else {
+        printf("result is NULL\n");
+        mysql_free_result(res);
+        return -1;
+    }
+    mysql_free_result(res);
+    return 0;
+}
+
+int queryUser(MYSQL* db, char* cmd, pUser_t puser) {
+    int ret;
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    ret = mysql_query(db, cmd);
+    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
+    printf("query ret=%d\n", ret);
+    res = mysql_use_result(db);
+    if (res) {
+        if ((row = mysql_fetch_row(res)) != NULL) {
+            strcpy(puser->name, row[1]);
+            strcpy(puser->password, row[3]);
+            printf("queryUser success\n");
+        } else {  //没有查询到数据
+            printf("empty set\n");
+            mysql_free_result(res);
+            return -1;
+        }
+    } else {
+        printf("result is NULL\n");
+        mysql_free_result(res);
+        return -1;
+    }
+    mysql_free_result(res);
+    return 0;
+} */

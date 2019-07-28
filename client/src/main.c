@@ -117,6 +117,14 @@ int main(int argc, char* argv[]) {
                         threadPoolExit(&threadInfo);
                         break;
                     case GETS_CMD:
+                        pNew = (pNode_t)calloc(1, sizeof(Node_t));
+                        strcpy(pNew->username,username);
+                        pNew->flag=GETS_CMD;
+                        strcpy(pNew->filePath,arg);
+                        pthread_mutex_lock(&pq->mutex);
+                        queInsert(pq, pNew);
+                        pthread_mutex_unlock(&pq->mutex);
+                        pthread_cond_signal(&threadInfo.cond);
                         break;
                     case PUTS_CMD:
                         pNew = (pNode_t)calloc(1, sizeof(Node_t));

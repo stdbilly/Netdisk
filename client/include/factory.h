@@ -23,8 +23,7 @@ int threadPoolExit(pFactory_t pf);
 
 int recvCycle(int sfd,void* buf,int recvLen);
 int putsFile(int serverFd,char* filePath);
-int getsFile(int serverFd);
-
+int getsFile(int serverFd,char* filePath);
 
 int sendRanStr(int sfd, pDataStream_t pData);
 int recvRanStr(int sfd, pDataStream_t pData, const char* user_name);

@@ -27,9 +27,9 @@ typedef struct {
 } UserStat_t, *pUserStat_t;
 
 int connectDB(MYSQL** db);           //连接数据库
-int modifyDB(MYSQL* db, char* cmd);  //更新、插入、删除操作
+/* int modifyDB(MYSQL* db, char* cmd);  //更新、插入、删除操作
 int queryDB(MYSQL* db, char* cmd);   //查询数据库
-int queryUser(MYSQL* db, char* cmd, pUser_t puser);
+int queryUser(MYSQL* db, char* cmd, pUser_t puser); */
 
 int userVerify(MYSQL* db, const char* user_name, const char* password);
 MYSQL_RES* selectDB(MYSQL* db, const char* table, const char* field,

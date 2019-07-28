@@ -18,14 +18,17 @@ void *threadFunc(void *p) {
         getTaskSuccess = queGet(pq, &pGet);  //拿任务
         pthread_cleanup_pop(1);
         if (!getTaskSuccess) {
-            
-            if (pGet->flag == PUTS_CMD) {
-                int socketFd;
+            int socketFd;
                 ret=reConnect(&socketFd,pGet->username);
                 if(ret){
                     break;
                 }
+            if (pGet->flag == PUTS_CMD) {
                 puts_cmd(socketFd, pGet->filePath);
+                close(socketFd);
+            }else if(pGet->flag==GETS_CMD){
+                gets_cmd(socketFd,pGet->filePath,pGet->username);
+                close(socketFd);
             }
             free(pGet);
             pGet = NULL;

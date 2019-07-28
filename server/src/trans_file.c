@@ -2,30 +2,46 @@
 #include "../include/crypto.h"
 #include "../include/factory.h"
 
-#define FILENAME "44.day10-项目讲解.avi"
 #define DEBUG
 
-typedef struct {
+/* typedef struct {
     int dataLen;
     char buf[1000];
-} fileInfo_t;
+} fileInfo_t; */
 
-int send_file(int clientFd) {
-    fileInfo_t file;
+int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
+    DataStream_t data;
     int ret;
-    file.dataLen = strlen(FILENAME);
-    strcpy(file.buf, FILENAME);
-    send(clientFd, &file, 4 + file.dataLen, 0);  //发送文件名
-    int fd = open(FILENAME, O_RDWR);
+    /* if(pfile->type==1){
+
+    } */
+    char filePath[PATH_LEN]="netdisk/";
+    strcat(filePath,pfile->file_md5);
+    int fd = open(filePath, O_RDWR);
+    ERROR_CHECK(fd,-1,"open");
+
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
-    file.dataLen = sizeof(buf.st_size);
-    memcpy(file.buf, &buf.st_size, file.dataLen);
-    send(clientFd, &file, 4 + file.dataLen, 0);  //发送文件大小
+    data.dataLen = sizeof(buf.st_size);
+    memcpy(data.buf, &buf.st_size, data.dataLen);
+    send(clientFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
     ret = sendfile(clientFd, fd, NULL, buf.st_size);
     printf("sendflie ret=%d\n", ret);
     ERROR_CHECK(ret, -1, "sendflie");
+    
+    if(ret!=buf.st_size){
+        printf("sendfile fail\n");
+        return -1;
+    }
+    //接收成功标志
+    recvCycle(clientFd,&data,DATAHEAD_LEN);
+    if(data.flag==SUCCESS){
+        printf("sendfile success\n");
+    }else{
+        printf("sendfile fail\n");
+        return -1;
+    }
     return 0;
 }
 

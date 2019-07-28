@@ -353,7 +353,7 @@ int puts_cmd(int serverFd, char* arg) {
     }
 
     char file_name[FILENAME_LEN] = {0};
-    //char file_dir[PATH_LEN] = {0};
+    // char file_dir[PATH_LEN] = {0};
     int i = 0;
     i = strlen(arg);
     //得到文件名和所在路径
@@ -362,7 +362,7 @@ int puts_cmd(int serverFd, char* arg) {
     }
     /* if (i == -1) {
         file_dir[0] = '.';
-    } 
+    }
     else {
         int j = 0;
         while (j != i) {
@@ -379,7 +379,7 @@ int puts_cmd(int serverFd, char* arg) {
     DataStream_t data;
     data.flag = PUTS_CMD;
     data.dataLen = strlen(file_name);
-    strcpy(data.buf, arg);
+    strcpy(data.buf, file_name);
     send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
     //接收确认信息
     recvCycle(serverFd, &data, DATAHEAD_LEN);
@@ -396,17 +396,72 @@ int puts_cmd(int serverFd, char* arg) {
         printf("暂时不支持上传文件夹～\n");
         return -1;
     }
-        /* if (chdir(file_dir)) {
-            printf("无法打开文件路径\n");
-            chdir(cur_path);
-            close(serverFd);
-            return -1;
-        } */
-    //发送文件
-    ret=putsFile(serverFd,arg);
-    if(ret){
+    /* if (chdir(file_dir)) {
+        printf("无法打开文件路径\n");
+        chdir(cur_path);
         close(serverFd);
-        printf("断开连接\n");
+        return -1;
+    } */
+    //发送文件
+    ret = putsFile(serverFd, arg);
+    if (ret) {
+        return -1;
+    }
+    return 0;
+}
+
+int gets_cmd(int serverFd, char* arg, char* username) {
+    if (!strlen(arg)) {
+        printf("请输入文件名\n");
+        return -1;
+    }
+    int ret;
+    //检查本地是否有此文件
+    char file_name[FILENAME_LEN];
+    int i = strlen(arg);
+    while (i>=0 && arg[i] != '/') {
+        i--;
+    }
+    i++;
+    int j = 0;
+    while (arg[i] != '\0') {
+        file_name[j++] = arg[i++];
+    }
+#ifdef DEBUG
+    printf("file_name=%s\n", file_name);
+#endif
+    char file_path[PATH_LEN];
+    sprintf(file_path, "downloads/%s/%s", username, file_name);
+    /* if (access(file_path, F_OK) == 0) {
+        printf("file with the same name already exists\n");
+    } */
+
+    //发送文件名，服务器检查文件是否存在
+    DataStream_t data;
+    data.flag = GETS_CMD;
+    data.dataLen = strlen(arg);
+    strcpy(data.buf, arg);
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+    //接收确认信息
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.flag == FAIL) {
+        printf("No such file or dictionary\n");
+        return -1;
+    }
+    //是否是文件夹
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.dataLen==0) {
+        printf("暂时不支持下载文件夹～\n");
+        return -1;
+    }
+
+    mkdir("downloads",0775);
+    char temp[PATH_LEN]={0};
+    sprintf(temp,"%s/%s","downloads",username);
+    mkdir(temp,0775);
+    //接收文件
+    ret=getsFile(serverFd,file_path);
+    if(ret){
         return -1;
     }
     return 0;
@@ -461,7 +516,7 @@ int cmdToNum(char* arg) {
     return cmdNum;
 }
 
-int reConnect(int *sfd,char* username){
+int reConnect(int* sfd, char* username) {
     tcpConnect(sfd);
     DataStream_t data;
     int ret;
@@ -495,7 +550,7 @@ int reConnect(int *sfd,char* username){
             printf("reconnect fail,retry...\n");
             return -1;
         }
-    }else{
+    } else {
         printf("key not found,please generate key\n");
         return -2;
     }
@@ -507,7 +562,7 @@ int checkConnect(int serverFd) {
     int len = sizeof(info);
     getsockopt(serverFd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t*)&len);
     if ((info.tcpi_state == TCP_ESTABLISHED)) {
-        //printf("已连接\n");
+        // printf("已连接\n");
         return 0;
     } else {
         printf("与服务器断开连接\n");

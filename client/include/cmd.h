@@ -45,6 +45,7 @@ int mkdir_cmd(int serverFd,char* arg);
 int cd_cmd(int serverFd,char* arg);
 int rm_cmd(int serverFd,char* arg);
 int puts_cmd(int serverFd, char* arg);
+int gets_cmd(int serverFd, char* arg, char* username);
 
 int loginWindow(int serverFd,pDataStream_t pData);
 void printMenu();

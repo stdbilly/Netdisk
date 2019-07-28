@@ -72,7 +72,7 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,
     strcpy(pustat->rootDirId, rootDirId);
     strcpy(pustat->curDirId, rootDirId);
 
-    updateCurDirId(db,name,pustat->curDirId);
+    updateCurDirId(db, name, pustat->curDirId);
 #ifdef DEBUG
     printf("username: %s,rootDirId=%s\n", name, rootDirId);
 #endif
@@ -401,16 +401,14 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 
     row = mysql_fetch_row(res);
     mysql_free_result(res);
-    if (atoi(row[2]) == 0)  
-    {// is dir
+    if (atoi(row[2]) == 0) {  // is dir
         strcpy(pustat->curDirId, row[1]);
         //更新用户当前路径
-        updateCurDirId(db,pustat->user.name,pustat->curDirId);
+        updateCurDirId(db, pustat->user.name, pustat->curDirId);
         pData->flag = SUCCESS;
         send(clientFd, pData, DATAHEAD_LEN, 0);
         return 0;
-    } else  
-    {// is file
+    } else {  // is file
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不合法");
         pData->dataLen = strlen(pData->buf);
@@ -553,11 +551,69 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     return 0;
 }
 
+int gets_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
+    MYSQL_RES *res;
+    char *abs_path;
+    int ret;
+    char file_path[PATH_LEN];
+
+    recvCycle(clientFd, pData->buf, pData->dataLen);  //接收文件名
+    strcpy(file_path, pData->buf);
+#ifdef DEBUG
+    printf("file_path:%s\n", file_path);
+#endif
+    //检查文件是否存在
+    abs_path = convert_path(db, file_path, pustat->rootDirId, pustat->curDirId);
+    if (abs_path == NULL) {
+        pData->flag = FAIL;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
+        return -1;
+    }
+    res = selectDB(db, "file", "file_path", abs_path, 0);
+    free(abs_path);
+    abs_path = NULL;
+    if (res == NULL) {
+        pData->flag = FAIL;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
+        return -1;
+    }
+    pData->flag = SUCCESS;
+    send(clientFd, pData, DATAHEAD_LEN, 0);
+
+    //检查是文件还是文件夹
+    MYSQL_ROW row;
+    row = mysql_fetch_row(res);
+    mysql_free_result(res);
+    FileStat_t fileInfo;
+
+    if (atoi(row[2]) == 0) {  // is dir
+        pData->dataLen=0;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
+        /* strcpy(file_name, row[3]);
+        strcpy(file_size, cur_dir_id);  // send cur_dir_id via file_size
+        strcpy(file_md5, "0"); */
+        return -1;
+    } else {  // is file
+        pData->dataLen=1;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
+        fileInfo.type=1;
+        fileInfo.file_size=atol(row[4]);
+        strcpy(fileInfo.file_name, row[3]);
+        strcpy(fileInfo.file_md5, row[6]);
+    }
+
+    ret = send_file(clientFd, db, pustat, &fileInfo);
+    if (ret) {
+        return -1;
+    }
+    return 0;
+}
+
 int reConnect(int clientFd, MYSQL *db, pDataStream_t pData,
               pUserStat_t pustat) {
     char name[21] = {0};
     int ret;
-     //无密码登录
+    //无密码登录
     recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
     strcpy(name, pData->buf);
 
@@ -585,9 +641,9 @@ int reConnect(int clientFd, MYSQL *db, pDataStream_t pData,
     strcpy(pustat->rootDirId, rootDirId);
 
     //找到当前目录id
-    MYSQL_RES* res;
+    MYSQL_RES *res;
     MYSQL_ROW row;
-    res=selectDB(db,"user","name",name,0);
+    res = selectDB(db, "user", "name", name, 0);
     row = mysql_fetch_row(res);
     mysql_free_result(res);
     strcpy(pustat->curDirId, row[2]);

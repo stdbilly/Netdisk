@@ -40,7 +40,7 @@ int putsFile(int serverFd, char* filePath) {
     if (data.flag == FILE_EXIST) {
         recvCycle(serverFd, &data, DATAHEAD_LEN);
         if (data.flag == SUCCESS) {
-            printf("上传中...   100%%\n");
+            printf("上传中... 100.00%%\n");
             printf("上传成功\n");
             return 0;
         } else {
@@ -66,42 +66,44 @@ int putsFile(int serverFd, char* filePath) {
         return -1;
     }
     if (data.flag != SUCCESS) {
-        printf("上传失败\n");
+        printf("\n上传失败\n");
         return -1;
         
     }
-    printf("上传中...   100%%\n");
+    printf("上传中... 100.00%%\n");
     //接收flag
     ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
     if (ret) {
         return -1;
     }
     if(ret!=SUCCESS){
-        printf("服务器存入数据库失败\n");
+        printf("\n服务器存入数据库失败\n");
         return -1;
     }
-    printf("上传成功\n");
+    printf("\n上传成功\n");
     close(fd);
     return 0;
 }
 
-int getsFile(int serverFd) {
-    int fd, pDataLen, ret;
-    char buf[1000] = {0};
-    recvCycle(serverFd, &pDataLen, 4);
-    recvCycle(serverFd, buf, pDataLen);  //接收文件名
-    fd = open(buf, O_RDWR | O_CREAT, 0666);
+int getsFile(int serverFd,char* filePath) {
+    int fd, ret;
+    DataStream_t data;
+    fd = open(filePath, O_RDWR | O_CREAT, 0666);
     ERROR_CHECK(fd, -1, "open");
     //接收文件大小
     off_t fileSize, download = 0, lastDownload = 0, slice;
-    recvCycle(serverFd, &pDataLen, 4);
-    recvCycle(serverFd, &fileSize, pDataLen);
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    recvCycle(serverFd, &fileSize, data.dataLen);
+#ifdef DEBUG
     printf("fileSize=%ld\n", fileSize);
+#endif
     int fds[2];
     pipe(fds);
     struct timeval start, end;
     gettimeofday(&start, NULL);
     slice = fileSize / 1000;
+    
+    printf("\n");
     while (download < fileSize) {
         ret = splice(serverFd, NULL, fds[1], NULL, 65536,
                      SPLICE_F_MOVE | SPLICE_F_MORE);
@@ -112,13 +114,20 @@ int getsFile(int serverFd) {
         splice(fds[0], NULL, fd, NULL, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
         if (download - lastDownload >= slice) {
-            printf("%5.2f%%\r", (float)download / fileSize * 100);
+            printf("下载中... %5.2f%%\r", (float)download / fileSize * 100);
             fflush(stdout);
             lastDownload = download;
         }
     }
+
     if (download == fileSize) {
-        printf("100.00%%\n");
+        printf("下载中... 100.00%%\n");
+        data.flag=SUCCESS;
+        send(serverFd,&data,DATAHEAD_LEN,0);
+    }else{
+        data.flag=FAIL;
+        send(serverFd,&data,DATAHEAD_LEN,0);
+        return -1;
     }
     gettimeofday(&end, NULL);
     printf("donload success, use time=%ld\n",
