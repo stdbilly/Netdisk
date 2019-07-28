@@ -36,7 +36,6 @@ int main(int argc, char* argv[]) {
     char username[NAME_LEN]={0};
     //先登录或注册
     ret = loginWindow(serverFd, &data);
-    printf("data,buf=%s\n", data.buf);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }

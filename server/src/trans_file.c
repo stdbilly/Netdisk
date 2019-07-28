@@ -10,6 +10,16 @@ int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     /* if(pfile->type==1){
 
     } */
+
+    off_t fileSize;
+    off_t* begPoint=NULL;
+    //接收flag，客户端是否已存在文件
+    recvCycle(clientFd,&data,DATAHEAD_LEN);
+    if(data.flag==FILE_EXIST){
+        recvCycle(clientFd, &fileSize, data.dataLen);//接收客户端文件大小
+        begPoint=&fileSize;
+    }
+
     char filePath[PATH_LEN]="netdisk/";
     strcat(filePath,pfile->file_md5);
     int fd = open(filePath, O_RDWR);
@@ -21,16 +31,20 @@ int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     memcpy(data.buf, &buf.st_size, data.dataLen);
     send(clientFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
-    ret = sendfile(clientFd, fd, NULL, buf.st_size);
+    ret = sendfile(clientFd, fd, begPoint, buf.st_size);
     printf("sendflie ret=%d\n", ret);
     ERROR_CHECK(ret, -1, "sendflie");
 
-    if(ret!=buf.st_size){
-        printf("sendfile fail\n");
+    //接收成功标志
+    bzero(&data,sizeof(DataStream_t));
+    recvCycle(clientFd,&data,DATAHEAD_LEN);
+    if(ret){
+        close(clientFd);
         return -1;
     }
-    //接收成功标志
-    recvCycle(clientFd,&data,DATAHEAD_LEN);
+#ifdef DEBUG
+    printf("data.flag=%d\n", data.flag);
+#endif
     if(data.flag==SUCCESS){
         printf("sendfile success\n");
     }else{

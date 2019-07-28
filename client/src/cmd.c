@@ -2,7 +2,7 @@
 #include "../include/crypto.h"
 #include "../include/factory.h"
 
-#define DEBUG
+//#define DEBUG
 
 int loginWindow(int serverFd, pDataStream_t pData) {
     int option, ret;
@@ -415,7 +415,7 @@ int gets_cmd(int serverFd, char* arg, char* username) {
         printf("请输入文件名\n");
         return -1;
     }
-    int ret;
+    int ret,existFlag=0;
     //检查本地是否有此文件
     char file_name[FILENAME_LEN];
     int i = strlen(arg);
@@ -432,9 +432,10 @@ int gets_cmd(int serverFd, char* arg, char* username) {
 #endif
     char file_path[PATH_LEN];
     sprintf(file_path, "downloads/%s/%s", username, file_name);
-    /* if (access(file_path, F_OK) == 0) {
+    if (access(file_path, F_OK) == 0) {
         printf("file with the same name already exists\n");
-    } */
+        existFlag=1;
+    }
 
     //发送文件名，服务器检查文件是否存在
     DataStream_t data;
@@ -460,7 +461,7 @@ int gets_cmd(int serverFd, char* arg, char* username) {
     sprintf(temp,"%s/%s","downloads",username);
     mkdir(temp,0775);
     //接收文件
-    ret=getsFile(serverFd,file_path);
+    ret=getsFile(serverFd,file_path,existFlag);
     if(ret){
         return -1;
     }

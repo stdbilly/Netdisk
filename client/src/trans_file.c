@@ -80,13 +80,31 @@ int putsFile(int serverFd, char* filePath) {
     return 0;
 }
 
-int getsFile(int serverFd,char* filePath) {
+int getsFile(int serverFd,char* filePath,int existFlag) {
     int fd, ret;
     DataStream_t data;
     fd = open(filePath, O_RDWR | O_CREAT, 0666);
     ERROR_CHECK(fd, -1, "open");
-    //接收文件大小
+
     off_t fileSize, download = 0, lastDownload = 0, slice;
+    //告知服务器文件是否存在
+    __off64_t* begPoint=NULL;
+    if(existFlag){ //文件已存在
+        data.flag=FILE_EXIST;
+        //获取文件大小
+        struct stat buf;
+        fstat(fd, &buf);
+        begPoint=&buf.st_size;
+        download+=buf.st_size;
+        data.dataLen = sizeof(buf.st_size);
+        memcpy(data.buf, &buf.st_size, data.dataLen);
+        send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);
+    }else{
+        data.flag=GETS_CMD;
+    }
+    send(serverFd,&data,DATAHEAD_LEN,0);
+
+    //接收文件大小
     recvCycle(serverFd, &data, DATAHEAD_LEN);
     recvCycle(serverFd, &fileSize, data.dataLen);
 #ifdef DEBUG
@@ -106,7 +124,7 @@ int getsFile(int serverFd,char* filePath) {
             break;
         }
         ERROR_CHECK(ret, -1, "splice");
-        splice(fds[0], NULL, fd, NULL, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
+        splice(fds[0], NULL, fd, begPoint, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
         if (download - lastDownload >= slice) {
             printf("下载中... %5.2f%%\r", (float)download / fileSize * 100);
@@ -114,7 +132,7 @@ int getsFile(int serverFd,char* filePath) {
             lastDownload = download;
         }
     }
-
+    
     if (download == fileSize) {
         printf("下载中... 100.00%%\n");
         data.flag=SUCCESS;
