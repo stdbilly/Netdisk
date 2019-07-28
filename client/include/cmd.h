@@ -25,7 +25,8 @@ enum CMD_NO{
     GETS_CMD,
     HELP_CMD,
     MKDIR_CMD,
-    EXIT_CMD
+    EXIT_CMD,
+    RECONNECT
 };
 
 enum return_flag{
@@ -49,5 +50,6 @@ int loginWindow(int serverFd,pDataStream_t pData);
 void printMenu();
 int cmdToNum(char* arg);
 int checkConnect(int serverFd);
+int reConnect(int *sfd,char* username);
 
 #endif

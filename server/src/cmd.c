@@ -89,7 +89,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
         recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
         strcpy(user.name, pData->buf);
         MYSQL_RES *res;
-        res = selectDB(db, "user", "name", user.name,0);
+        res = selectDB(db, "user", "name", user.name, 0);
         if (res == NULL) {  //用户名不存在，可以注册
             mysql_free_result(res);
             pData->flag = SUCCESS;
@@ -145,7 +145,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
     fileInfo.file_size = 0;
     strcpy(fileInfo.file_md5, "");
 
-    if (!selectDB(db, "file", "dir_id", "-1",0)) {
+    if (!selectDB(db, "file", "dir_id", "-1", 0)) {
         char query[300] =
             "INSERT INTO file(dir_id, id,type, file_name, file_path) VALUES(";
         sprintf(query, "%s %d,%d,%d,'%s','%s')", query, -1, 1, 0, "home",
@@ -178,7 +178,7 @@ char *convert_path(MYSQL *db, const char *path, const char *rootDirId,
     MYSQL_RES *res;
     MYSQL_ROW row;
     if (path[0] == '/') {  // strat with user root dir
-        res = selectDB(db, "file", "id", rootDirId,0);
+        res = selectDB(db, "file", "id", rootDirId, 0);
         row = mysql_fetch_row(res);
         mysql_free_result(res);
         strcpy(abs_path, row[5]);
@@ -189,14 +189,14 @@ char *convert_path(MYSQL *db, const char *path, const char *rootDirId,
         return abs_path;
     }
     if (path[0] == '.' && path[1] == '.') {  // 在上一级目录创建
-        res = selectDB(db, "file", "id", curDirId,0);
+        res = selectDB(db, "file", "id", curDirId, 0);
         if (res == NULL) {
             free(abs_path);
             return NULL;
         }
         row = mysql_fetch_row(res);
         mysql_free_result(res);
-        res = selectDB(db, "file", "id", row[0],0);
+        res = selectDB(db, "file", "id", row[0], 0);
         if (res == NULL) {
             free(abs_path);
             return NULL;
@@ -220,7 +220,7 @@ char *convert_path(MYSQL *db, const char *path, const char *rootDirId,
             convert_path(db, new_path, rootDirId, row[1]);
         }
     } else {  // start with cur dir
-        res = selectDB(db, "file", "id", curDirId,0);
+        res = selectDB(db, "file", "id", curDirId, 0);
         if (res == NULL) {
             free(abs_path);
             return NULL;
@@ -266,7 +266,7 @@ int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     /* if (pData->dataLen!=0) {
         recvCycle(clientFd, pData->buf, pData->dataLen);
     } */
-    res = selectDB(db, "file", "dir_id", pustat->curDirId,0);
+    res = selectDB(db, "file", "dir_id", pustat->curDirId, 0);
     if (res == NULL) {
         pData->dataLen = 0;
         send(clientFd, pData, DATAHEAD_LEN, 0);
@@ -293,7 +293,7 @@ int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     MYSQL_RES *res;
     MYSQL_ROW row;
-    res = selectDB(db, "file", "id", pustat->curDirId,0);
+    res = selectDB(db, "file", "id", pustat->curDirId, 0);
     row = mysql_fetch_row(res);
     sprintf(pData->buf, "%s",
             row[5] + 5 + strlen(pustat->user.name) + 1);  //去掉"/home/username"
@@ -302,7 +302,7 @@ int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 #endif
 
     if (strlen(pData->buf)) {
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     } else {
         strcpy(pData->buf, "/");
@@ -335,7 +335,7 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
-    res = selectDB(db, "file", "file_path", abs_path,0);
+    res = selectDB(db, "file", "file_path", abs_path, 0);
     free(abs_path);
     abs_path = NULL;
 
@@ -373,12 +373,12 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     MYSQL_RES *res;
     MYSQL_ROW row;
     char *abs_path;
-    recvCycle(clientFd, pData->buf,pData->dataLen); 
+    recvCycle(clientFd, pData->buf, pData->dataLen);
     abs_path =
         convert_path(db, pData->buf, pustat->rootDirId, pustat->curDirId);
 #ifdef DEBUG
     printf("abs_path =%s,\n", abs_path);
-#endif       
+#endif
     if (abs_path == NULL) {
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不合法");
@@ -386,7 +386,7 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
-    res = selectDB(db, "file", "file_path", abs_path,0);
+    res = selectDB(db, "file", "file_path", abs_path, 0);
     free(abs_path);
     abs_path = NULL;
     if (res == NULL) {
@@ -402,8 +402,8 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     if (atoi(row[2]) == 0)  // is dir
     {
         strcpy(pustat->curDirId, row[1]);
-        pData->flag=SUCCESS;
-        send(clientFd,pData,DATAHEAD_LEN,0);
+        pData->flag = SUCCESS;
+        send(clientFd, pData, DATAHEAD_LEN, 0);
         // int ret;
         // ret = resolve_ls(result, n, "", db, cur_dir_id, root_id);
         return 0;
@@ -419,15 +419,15 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 
 int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     MYSQL_RES *res;
-    MYSQL_RES* md5_res;
+    MYSQL_RES *md5_res;
     MYSQL_ROW row;
-    char* abs_path;
-    char cmd_path[PATH_LEN]={0};
-    int i, n,ret,num;
+    char *abs_path;
+    char cmd_path[PATH_LEN] = {0};
+    int i, n, ret, num;
 
-    recvCycle(clientFd,pData->buf,pData->dataLen);
-    strcpy(cmd_path,pData->buf);
-    abs_path=convert_path(db,cmd_path,pustat->rootDirId,pustat->curDirId);
+    recvCycle(clientFd, pData->buf, pData->dataLen);
+    strcpy(cmd_path, pData->buf);
+    abs_path = convert_path(db, cmd_path, pustat->rootDirId, pustat->curDirId);
     if (abs_path == NULL) {
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不合法");
@@ -440,7 +440,7 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     strcat(regexp, abs_path);
     free(abs_path);
     abs_path = NULL;
-    res = selectDB(db, "file", "file_path", regexp,1);
+    res = selectDB(db, "file", "file_path", regexp, 1);
     if (res == NULL) {
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不存在");
@@ -454,7 +454,7 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         row = mysql_fetch_row(res);
         //是否是文件夹
         if (atoi(row[2]) == 0) {
-            ret=deleteFile(db,pustat->user.name,row[5]);
+            ret = deleteFile(db, pustat->user.name, row[5]);
 #ifdef DEBUG
             printf("%s is removed\n", row[3]);
 #endif
@@ -470,7 +470,7 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
             printf("%s is removed\n", row[3]);
 #endif
 
-            if(num == 1)       //last file
+            if (num == 1)  // last file
             {
                 char path_name[FILENAME_LEN] = "netdisk/";
                 strcat(path_name, file_md5);
@@ -482,48 +482,46 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         }
     }
     mysql_free_result(res);
-    //delete account
-    if (strcmp(cmd_path, "/") == 0 || strcmp(cmd_path, "./") == 0)
-    {
+    // delete account
+    if (strcmp(cmd_path, "/") == 0 || strcmp(cmd_path, "./") == 0) {
         char pk_path[FILENAME_LEN];
         sprintf(pk_path, "keys/%s_%s.key", pustat->user.name, "pub");
         ret = remove(pk_path);
         ret = deleteUser(db, pustat->user.name);
     }
 
-    if (ret==-1)
-    {
-        pData->flag=FAIL;
-        strcpy(pData->buf,"文件或文件夹删除失败，请重试");
-        pData->dataLen=strlen(pData->buf);
-        send(clientFd,pData,pData->dataLen+DATAHEAD_LEN,0);
+    if (ret == -1) {
+        pData->flag = FAIL;
+        strcpy(pData->buf, "文件或文件夹删除失败，请重试");
+        pData->dataLen = strlen(pData->buf);
+        send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
-    }else{
-        pData->flag=SUCCESS;
+    } else {
+        pData->flag = SUCCESS;
 #ifdef DEBUG
         printf("rm success\n");
 #endif
-        send(clientFd,pData,DATAHEAD_LEN,0);
+        send(clientFd, pData, DATAHEAD_LEN, 0);
         return 0;
     }
-    
+
     return 0;
 }
 
-int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat){
-    MYSQL_RES* res;
-    char* abs_path;
+int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
+    MYSQL_RES *res;
+    char *abs_path;
+    int ret;
     char file_name[FILENAME_LEN];
 
-    recvCycle(clientFd, pData->buf,pData->dataLen);//接收文件名
-    strcpy(file_name,pData->buf);
+    recvCycle(clientFd, pData->buf, pData->dataLen);  //接收文件名
+    strcpy(file_name, pData->buf);
 #ifdef DEBUG
-        printf("file_name:%s\n",file_name);
+    printf("file_name:%s\n", file_name);
 #endif
 
     abs_path = convert_path(db, file_name, pustat->rootDirId, pustat->curDirId);
-    if (abs_path == NULL)
-    {
+    if (abs_path == NULL) {
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不合法");
         pData->dataLen = strlen(pData->buf);
@@ -531,25 +529,68 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat){
         return -1;
     }
     //检查是否有同名文件
-    res=selectDB(db,"file","file_path",abs_path,0);
+    res = selectDB(db, "file", "file_path", abs_path, 0);
     free(abs_path);
-    abs_path=NULL;
-    if(res){
-        pData->flag=FILE_EXIST;
-        strcpy(pData->buf,"文件已存在")；
+    abs_path = NULL;
+    if (res) {
+        pData->flag = FILE_EXIST;
+        strcpy(pData->buf, "文件已存在");
         pData->dataLen = strlen(pData->buf);
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
-    pData->flag=SUCCESS;
-    send(clientFd,pData,DATAHEAD_LEN,0);
+    pData->flag = SUCCESS;
+    send(clientFd, pData, DATAHEAD_LEN, 0);
 
     FileStat_t fileInfo;
-    strcpy(fileInfo.file_name,file_name);
-    recv_file(clientFd, db, pustat,&fileInfo);
+    strcpy(fileInfo.file_name, file_name);
+    ret = recv_file(clientFd, db, pustat, &fileInfo);
+    if (ret) {
+        return -1;
+    }
+    return 0;
 }
 
-void sendErrMsg(int clientFd, pDataStream_t pData) {
+int reConnect(int clientFd, MYSQL *db, pDataStream_t pData,
+              pUserStat_t pustat) {
+    char name[21] = {0};
+    int ret;
+     //无密码登录
+    recvCycle(clientFd, pData->buf, pData->dataLen);  //接收用户名
+    strcpy(name, pData->buf);
+
+    ret = recvRanStr(clientFd, pData);
+    if (ret == -1) {
+        printf("ranStr verify failed\n");
+        pData->flag = FAIL;
+        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+        return -1;
+    }
+    ret = sendRanStr(clientFd, pData, name);
+    if (ret == -1) {
+        printf("ranStr verify failed\n");
+        pData->flag = FAIL;
+        send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+        return -1;
+    }
+
+    printf("user_verified\n");
+    pData->flag = SUCCESS;
+    send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
+
+    strcpy(pustat->user.name, name);
+    char *rootDirId = findRootDir(db, name);  //找到根目录id
+    strcpy(pustat->rootDirId, rootDirId);
+    strcpy(pustat->curDirId, rootDirId);
+#ifdef DEBUG
+    printf("username: %s,rootDirId=%s\n", name, rootDirId);
+#endif
+    free(rootDirId);
+    rootDirId = NULL;
+    return 0;
+}
+
+/* void sendErrMsg(int clientFd, pDataStream_t pData) {
     pData->flag = FAIL;
     pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
     send(clientFd, pData, pData->dataLen, 0);
@@ -589,4 +630,4 @@ char *genRandomStr(char *str, int len) {
     }
 
     return str;
-}
+} */

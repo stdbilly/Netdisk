@@ -45,7 +45,7 @@
 #define THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return -1;}}
 #define CHILD_THREAD_ERROR_CHECK(ret,funcName) {if(ret!=0) {printf("%s:%s\n",funcName,strerror(ret));return (void*)-1;}}
 
-#define NAME_LEN 20
+#define NAME_LEN 21
 #define PATH_LEN 200
 #define FILENAME_LEN 100
 #define MD5_LEN 150

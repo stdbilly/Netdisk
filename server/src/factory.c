@@ -31,7 +31,7 @@ void *threadFunc(void *p) {
                 bzero(&data, sizeof(data));
                 ret =
                     recvCycle(pGet->clientFd, &data, DATAHEAD_LEN);  //接收flag
-                if (ret == -1) {
+                if (ret) {
                     goto DISCONNECT;
                 }
 
@@ -57,9 +57,19 @@ void *threadFunc(void *p) {
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:
+                        ret=puts_cmd(pGet->clientFd,db,&data,&ustat);
+                        if(ret){
+                            goto DISCONNECT;
+                        }
                         break;
                     case MKDIR_CMD:
                         mkdir_cmd(pGet->clientFd,db,&data,&ustat);
+                        break;
+                    case RECONNECT:
+                        ret=reConnect(pGet->clientFd, db, &data, &ustat);
+                        if(ret){
+                            goto DISCONNECT;
+                        }
                         break;
                     default:
                         break;
@@ -68,10 +78,10 @@ void *threadFunc(void *p) {
         DISCONNECT:
             close(pGet->clientFd);
             free(pGet);
+            pGet = NULL;
             mysql_close(db);
             printf("user disconncet\n");
         }
-        pGet = NULL;
     }
 }
 

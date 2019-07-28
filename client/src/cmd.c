@@ -353,22 +353,23 @@ int puts_cmd(int serverFd, char* arg) {
     }
 
     char file_name[FILENAME_LEN] = {0};
-    char file_dir[PATH_LEN] = {0};
+    //char file_dir[PATH_LEN] = {0};
     int i = 0;
     i = strlen(arg);
     //得到文件名和所在路径
     while (arg[i] != '/' && i != -1) {
         i--;
     }
-    if (i == -1) {
+    /* if (i == -1) {
         file_dir[0] = '.';
-    } else {
+    } 
+    else {
         int j = 0;
         while (j != i) {
             file_dir[j] = arg[j];
             j++;
         }
-    }
+    } */
     i++;
     int k = 0;
     while (arg[i] != '\0') {
@@ -388,22 +389,27 @@ int puts_cmd(int serverFd, char* arg) {
         return -1;
     }
 
-    char cur_path[PATH_LEN];
-    getcwd(cur_path, sizeof(cur_path));
+    /* char cur_path[PATH_LEN];
+    getcwd(cur_path, sizeof(cur_path)); */
 
     if (S_ISDIR(buf.st_mode)) {
         printf("暂时不支持上传文件夹～\n");
-    } else {
+        return -1;
+    }
         /* if (chdir(file_dir)) {
             printf("无法打开文件路径\n");
             chdir(cur_path);
             close(serverFd);
             return -1;
         } */
-        ret=putsFile(serverFd,arg);
-
-
+    //发送文件
+    ret=putsFile(serverFd,arg);
+    if(ret){
+        close(serverFd);
+        printf("断开连接\n");
+        return -1;
     }
+    return 0;
 }
 
 int cmdToNum(char* arg) {
@@ -455,15 +461,56 @@ int cmdToNum(char* arg) {
     return cmdNum;
 }
 
+int reConnect(int *sfd,char* username){
+    tcpConnect(sfd);
+    DataStream_t data;
+    int ret;
+    strcpy(data.buf, username);
+
+    char pkPath[100];
+    sprintf(pkPath, "%s_rsa.key", username);
+    if (access(pkPath, F_OK) == 0) {  //有私钥
+        data.flag = RECONNECT;
+        data.dataLen = strlen(data.buf);
+        send(*sfd, &data, data.dataLen + DATAHEAD_LEN,
+             0);  //发送用户名和flag
+
+        ret = sendRanStr(*sfd, &data);  //发送随机字符串
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            return -1;
+        }
+        ret = recvRanStr(*sfd, &data, username);
+        if (ret == -1) {
+            printf("ranStr verify failed\n");
+            return -1;
+        }
+
+        recvCycle(*sfd, &data, DATAHEAD_LEN);  //接收falg
+        if (data.flag == SUCCESS) {
+            printf("reconnect success\n");
+            strcpy(data.buf, username);
+            return 0;
+        } else {
+            printf("reconnect fail,retry...\n");
+            return -1;
+        }
+    }else{
+        printf("key not found,please generate key\n");
+        return -2;
+    }
+    return 0;
+}
+
 int checkConnect(int serverFd) {
     struct tcp_info info;
     int len = sizeof(info);
     getsockopt(serverFd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t*)&len);
     if ((info.tcpi_state == TCP_ESTABLISHED)) {
-        printf("已连接");
+        printf("已连接\n");
         return 0;
     } else {
-        printf("断开连接");
+        printf("断开连接\n");
         return -1;
     }
 }

@@ -33,16 +33,17 @@ int main(int argc, char* argv[]) {
     pNode_t pNew;
     int readyFdCcount, i, ret, cmdNum;
     DataStream_t data;
+    char username[NAME_LEN]={0};
     //先登录或注册
     ret = loginWindow(serverFd, &data);
     printf("data,buf=%s\n", data.buf);
     if (ret) {  //退出
         threadPoolExit(&threadInfo);
     }
-
+    strcpy(username,data.buf);
     while (1) {
         GREEN
-        printf("%s@Netdisk:$ ", data.buf);
+        printf("%s@Netdisk:$ ", username);
         CLOSE_COLOR
         fflush(stdout);
         readyFdCcount = epoll_wait(epfd, evs, 3, -1);
@@ -64,15 +65,47 @@ int main(int argc, char* argv[]) {
                 cmdNum = cmdToNum(arg);
                 switch (cmdNum) {
                     case LS_CMD:
+                        if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        }
                         ls_cmd(serverFd, arg);
                         break;
                     case CD_CMD:
+                        if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        }
                         cd_cmd(serverFd, arg);
                         break;
                     case PWD_CMD:
+                        if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        }
                         pwd_cmd(serverFd);
                         break;
                     case RM_CMD:
+                        if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        }
                         rm_cmd(serverFd, arg);
                         break;
                     case HELP_CMD:
@@ -80,20 +113,37 @@ int main(int argc, char* argv[]) {
                         printMenu();
                         break;
                     case EXIT_CMD:
+                        close(serverFd);
                         threadPoolExit(&threadInfo);
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:
+                        /* if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        } */
                         pNew = (pNode_t)calloc(1, sizeof(Node_t));
                         pNew->serverFd = serverFd;
-                        strcpy(pNew->fileName,arg);
+                        pNew->flag=PUTS_CMD;
+                        strcpy(pNew->filePath,arg);
                         pthread_mutex_lock(&pq->mutex);
                         queInsert(pq, pNew);
                         pthread_mutex_unlock(&pq->mutex);
                         pthread_cond_signal(&threadInfo.cond);
-                        printf("开始发送文件\n");
                         break;
                     case MKDIR_CMD:
+                        if(checkConnect(serverFd)){
+                            while((ret=reConnect(&serverFd,username))==-1){
+                                if(ret==-2){
+                                    close(serverFd);
+                                    threadPoolExit(&threadInfo);    
+                                }
+                            }
+                        }
                         mkdir_cmd(serverFd, arg);
                         break;
                     case -1:

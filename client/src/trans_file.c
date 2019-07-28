@@ -1,6 +1,7 @@
 #include "../include/cmd.h"
 #include "../include/crypto.h"
 #include "../include/factory.h"
+#include "../include/md5.h"
 
 #define DEBUG
 
@@ -9,57 +10,77 @@
     char buf[1000];
 } fileInfo_t; */
 
-int putsFile(int serverFd,char* filePath) {
+int putsFile(int serverFd, char* filePath) {
     int fd = open(filePath, O_RDWR);
-    if(fd==-1){
+    if (fd == -1) {
         printf("文件不存在\n");
         return -1;
     }
     DataStream_t data;
     int ret;
 
-    printf("上传中... %5.2f%%\r",0.0);
+    printf("上传中... %5.2f%%\r", 0.0);
     fflush(stdout);
 
     //发送md5
     char file_md5[MD5_LEN] = {0};
     ret = compute_file_md5(fd, file_md5);
-    if(ret)
-    {
+    if (ret) {
         return -1;
     }
     strcpy(data.buf, file_md5);
-    data.dataLen=strlen(data.buf);
-    send(serverFd,&data,data.dataLen+DATAHEAD_LEN,0);
+#ifdef DEBUG
+    printf("file_md5=%s,data.buf=%s",file_md5,data.buf);
+#endif
+    data.dataLen = strlen(data.buf)+1;
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
     //服务器检查文件是否存在
     //接收flag
-    recvCycle(serverFd,&data,DATAHEAD_LEN);
-    if(data.flag==FILE_EXIST){
-        recvCycle(serverFd,&data,DATAHEAD_LEN);
-        if(data.dataLen==SUCCESS){
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (data.flag == FILE_EXIST) {
+        recvCycle(serverFd, &data, DATAHEAD_LEN);
+        if (data.dataLen == SUCCESS) {
             printf("上传中... 100%%\n");
             printf("上传成功\n");
             return 0;
-        }else{
+        } else {
             printf("上传失败\n");
             return -1;
         }
-    }else{
+    } else {
         lseek(fd, 0, SEEK_SET);
     }
-
-
 
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
     data.dataLen = sizeof(buf.st_size);
     memcpy(data.buf, &buf.st_size, data.dataLen);
-    send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
     ret = sendfile(serverFd, fd, NULL, buf.st_size);
     printf("sendflie ret=%d\n", ret);
     ERROR_CHECK(ret, -1, "sendflie");
-    printf("upload success\n");
+    //接收flag
+    recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if (ret == 0) {
+        return -1;
+    }
+    if (data.flag != SUCCESS) {
+        printf("上传失败\n");
+        return -1;
+        
+    }
+    printf("上传中... 100%%\n");
+    //接收flag
+    ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
+    if (ret == 0) {
+        return -1;
+    }
+    if(ret!=SUCCESS){
+        printf("服务器存入数据库失败\n");
+        return -1;
+    }
+    printf("上传成功\n");
     close(fd);
     return 0;
 }
@@ -112,15 +133,15 @@ int sendRanStr(int sfd, pDataStream_t pData) {
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
     strcpy(pData->buf, RanStr);
-    pData->dataLen = strlen(pData->buf)+1 ;
-    ret=send(sfd, pData,pData->dataLen+ DATAHEAD_LEN,0);  // send RanStr
+    pData->dataLen = strlen(pData->buf) + 1;
+    ret = send(sfd, pData, pData->dataLen + DATAHEAD_LEN, 0);  // send RanStr
 #ifdef DEBUG
-    printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf),ret);
+    printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf), ret);
 #endif
-    recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
-    
+    recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
+
     recvCycle(sfd, pData->buf, pData->dataLen);
-     
+
     char* RanStr_tmp;
     RanStr_tmp = rsa_verify(pData->buf);  // verify
     if (RanStr_tmp == NULL) {
@@ -139,10 +160,10 @@ int sendRanStr(int sfd, pDataStream_t pData) {
 
 int recvRanStr(int sfd, pDataStream_t pData, const char* user_name) {
     char* RanStr_tmp;
-    recvCycle(sfd, pData, DATAHEAD_LEN); // recv RanStr
+    recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
     recvCycle(sfd, pData->buf, pData->dataLen);
-    
-    RanStr_tmp = rsa_sign(pData->buf, user_name);//私钥加密
+
+    RanStr_tmp = rsa_sign(pData->buf, user_name);  //私钥加密
     if (RanStr_tmp == NULL) {
         return -1;
     }
@@ -150,50 +171,48 @@ int recvRanStr(int sfd, pDataStream_t pData, const char* user_name) {
     free(RanStr_tmp);
     RanStr_tmp = NULL;
     pData->dataLen = RSA_EN_LEN;
-    #ifdef DEBUG
-    printf("bufLen=%ld\n",strlen(pData->buf));
-    #endif
-    send(sfd, pData, pData->dataLen+DATAHEAD_LEN ,0); 
+#ifdef DEBUG
+    printf("bufLen=%ld\n", strlen(pData->buf));
+#endif
+    send(sfd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     return 0;
 }
 
-int sendPubKey(int serverFd,char* username) {
+int sendPubKey(int serverFd, char* username) {
     DataStream_t data;
     int ret;
     char pkPath[100];
-    sprintf(pkPath,"%s_rsa_pub.key",username);
+    sprintf(pkPath, "%s_rsa_pub.key", username);
     int pkfd = open(pkPath, O_RDONLY);
-    ERROR_CHECK(pkfd,-1,"open");
-    
+    ERROR_CHECK(pkfd, -1, "open");
+
     int fd = open(pkPath, O_RDONLY);
-    ERROR_CHECK(fd,-1,"open");
+    ERROR_CHECK(fd, -1, "open");
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
     data.dataLen = sizeof(buf.st_size);
     memcpy(data.buf, &buf.st_size, data.dataLen);
-    send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
+    send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
     ret = sendfile(serverFd, fd, NULL, buf.st_size);
-    #ifdef DEBUG
+#ifdef DEBUG
     printf("sendflie ret=%d\n", ret);
-    #endif
+#endif
     ERROR_CHECK(ret, -1, "sendflie");
 #ifdef DEBUG
     printf("sendPubKey success\n");
-#endif    
+#endif
     close(fd);
     return 0;
 }
 
-int recvCycle(int sfd,void* buf,int recvLen) {
-    char *p=(char*)buf;
-    int ret,total=0;
-    while(total<recvLen) {
-        ret=recv(sfd,p+total,recvLen-total,0);
-        ERROR_CHECK(ret,-1,"recv");
-        total+=ret;
+int recvCycle(int sfd, void* buf, int recvLen) {
+    char* p = (char*)buf;
+    int ret, total = 0;
+    while (total < recvLen) {
+        ret = recv(sfd, p + total, recvLen - total, 0);
+        ERROR_CHECK(ret, -1, "recv");
+        total += ret;
     }
     return 0;
 }
-
-

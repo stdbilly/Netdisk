@@ -19,7 +19,7 @@ int epollAdd(int epfd, int fd);
 
 
 int send_file(int clientFd);
-int recv_file(int clientFd);
+int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile);
 int recvCycle(int sfd, void *buf, int recvLen);
 int send_cycle(int sfd, const char* data, int send_len);
 
