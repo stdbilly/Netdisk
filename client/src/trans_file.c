@@ -5,11 +5,6 @@
 
 #define DEBUG
 
-/* typedef struct {
-    int pDataLen;
-    char buf[1000];
-} fileInfo_t; */
-
 int putsFile(int serverFd, char* filePath) {
     int fd = open(filePath, O_RDWR);
     if (fd == -1) {
@@ -102,7 +97,7 @@ int getsFile(int serverFd,char* filePath) {
     struct timeval start, end;
     gettimeofday(&start, NULL);
     slice = fileSize / 1000;
-    
+
     printf("\n");
     while (download < fileSize) {
         ret = splice(serverFd, NULL, fds[1], NULL, 65536,

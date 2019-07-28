@@ -4,11 +4,6 @@
 
 #define DEBUG
 
-/* typedef struct {
-    int dataLen;
-    char buf[1000];
-} fileInfo_t; */
-
 int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     DataStream_t data;
     int ret;
@@ -29,7 +24,7 @@ int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     ret = sendfile(clientFd, fd, NULL, buf.st_size);
     printf("sendflie ret=%d\n", ret);
     ERROR_CHECK(ret, -1, "sendflie");
-    
+
     if(ret!=buf.st_size){
         printf("sendfile fail\n");
         return -1;
@@ -237,7 +232,7 @@ int recvPubKey(int clientFd, char* username) {
             break;
         }
     }
-    // bug fix
+    
     printf("recvPubKey success\n");
     close(fd);
     return 0;
@@ -250,28 +245,6 @@ int recvCycle(int sfd, void* buf, int recvLen) {
         ret = recv(sfd, p + total, recvLen - total, 0);
         ERROR_CHECK(ret, -1, "recv");
         total += ret;
-    }
-    return 0;
-}
-
-int send_cycle(int sfd, const char* data, int send_len) {
-    int total = 0;
-    int ret;
-    while (total < send_len) {
-        ret = send(sfd, data + total, send_len - total, 0);
-        if (ret == -1) {
-#ifdef DEBUG
-            printf("transmission interrupted\n");
-#endif
-            return -1;
-        }
-        if (ret == 0) {
-#ifdef DEBUG
-            printf("transmission closed\n");
-#endif
-            return -1;
-        }
-        total = total + ret;
     }
     return 0;
 }
