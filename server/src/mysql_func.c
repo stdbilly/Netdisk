@@ -20,7 +20,7 @@ int connectDB(MYSQL** db) {
         printf("connect database error:%s\n", mysql_error(*db));
         return -1;
     } else {
-        printf("connect success\n");
+        printf("connect database success\n");
     }
     return 0;
 }
@@ -392,5 +392,14 @@ int deleteFile(MYSQL* db, const char* user_name, const char* file_path) {
 
     strcpy(query, "COMMIT");
     mysql_query(db, query);
+    return 0;
+}
+
+int updateCurDirId(MYSQL* db, char* user_name,char* curDirId){
+    int ret;
+    char query[QUERY_LEN]="update user set cur_dir_id=";
+    sprintf(query,"%s%s %s'%s'", query, curDirId, "where name=", user_name);
+    ret = mysql_query(db, query);
+    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     return 0;
 }

@@ -40,7 +40,7 @@ int putsFile(int serverFd, char* filePath) {
     if (data.flag == FILE_EXIST) {
         recvCycle(serverFd, &data, DATAHEAD_LEN);
         if (data.flag == SUCCESS) {
-            printf("上传中... 100%%\n");
+            printf("上传中...   100%%\n");
             printf("上传成功\n");
             return 0;
         } else {
@@ -70,7 +70,7 @@ int putsFile(int serverFd, char* filePath) {
         return -1;
         
     }
-    printf("上传中... 100%%\n");
+    printf("上传中...   100%%\n");
     //接收flag
     ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
     if (ret) {

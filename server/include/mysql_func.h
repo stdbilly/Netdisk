@@ -43,5 +43,6 @@ char* findRootDir(MYSQL* db, const char* user_name);
 int deleteUserFile(MYSQL* db, const char* user_id, const char* file_id);
 int deleteUser(MYSQL* db, const char* user_name);
 int deleteFile(MYSQL* db, const char* user_name, const char* file_path);
+int updateCurDirId(MYSQL* db, char* user_name,char* curDirId);
 
 #endif

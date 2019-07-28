@@ -71,6 +71,8 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,
     char *rootDirId = findRootDir(db, name);  //找到根目录id
     strcpy(pustat->rootDirId, rootDirId);
     strcpy(pustat->curDirId, rootDirId);
+
+    updateCurDirId(db,name,pustat->curDirId);
 #ifdef DEBUG
     printf("username: %s,rootDirId=%s\n", name, rootDirId);
 #endif
@@ -399,16 +401,16 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 
     row = mysql_fetch_row(res);
     mysql_free_result(res);
-    if (atoi(row[2]) == 0)  // is dir
-    {
+    if (atoi(row[2]) == 0)  
+    {// is dir
         strcpy(pustat->curDirId, row[1]);
+        //更新用户当前路径
+        updateCurDirId(db,pustat->user.name,pustat->curDirId);
         pData->flag = SUCCESS;
         send(clientFd, pData, DATAHEAD_LEN, 0);
-        // int ret;
-        // ret = resolve_ls(result, n, "", db, cur_dir_id, root_id);
         return 0;
-    } else  // is file
-    {
+    } else  
+    {// is file
         pData->flag = FAIL;
         strcpy(pData->buf, "路径不合法");
         pData->dataLen = strlen(pData->buf);
@@ -581,7 +583,14 @@ int reConnect(int clientFd, MYSQL *db, pDataStream_t pData,
     strcpy(pustat->user.name, name);
     char *rootDirId = findRootDir(db, name);  //找到根目录id
     strcpy(pustat->rootDirId, rootDirId);
-    strcpy(pustat->curDirId, rootDirId);
+
+    //找到当前目录id
+    MYSQL_RES* res;
+    MYSQL_ROW row;
+    res=selectDB(db,"user","name",name,0);
+    row = mysql_fetch_row(res);
+    mysql_free_result(res);
+    strcpy(pustat->curDirId, row[2]);
 #ifdef DEBUG
     printf("username: %s,rootDirId=%s\n", name, rootDirId);
 #endif

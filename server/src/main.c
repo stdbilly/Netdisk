@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
 
             if (evs[i].data.fd == socketFd) {
                 clientFd = accept(socketFd, NULL, NULL);
+                printf("client:%d connect\n",clientFd);
                 pNew = (pNode_t)calloc(1, sizeof(Node_t));
                 pNew->clientFd = clientFd;
                 pthread_mutex_lock(&pq->mutex);

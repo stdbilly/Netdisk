@@ -507,10 +507,10 @@ int checkConnect(int serverFd) {
     int len = sizeof(info);
     getsockopt(serverFd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t*)&len);
     if ((info.tcpi_state == TCP_ESTABLISHED)) {
-        printf("已连接\n");
+        //printf("已连接\n");
         return 0;
     } else {
-        printf("断开连接\n");
+        printf("与服务器断开连接\n");
         return -1;
     }
 }

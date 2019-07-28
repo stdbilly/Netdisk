@@ -18,26 +18,20 @@ void *threadFunc(void *p) {
         getTaskSuccess = queGet(pq, &pGet);  //拿任务
         pthread_cleanup_pop(1);
         if (!getTaskSuccess) {
-            if (checkConnect(pGet->serverFd)) {
-                while ((ret = reConnect(&pGet->serverFd, pGet->username)) == -1) {
-                    if (ret == -2) {
-                        threadPoolExit(pthreadInfo);
-                    }
-                }
-            }
+            
             if (pGet->flag == PUTS_CMD) {
-                ret = puts_cmd(pGet->serverFd, pGet->filePath);
-                /* if (ret) {
-                    free(pGet);
-                    pGet = NULL;
-                    pthread_exit(NULL);
-                } */
+                int socketFd;
+                ret=reConnect(&socketFd,pGet->username);
+                if(ret){
+                    break;
+                }
+                puts_cmd(socketFd, pGet->filePath);
             }
             free(pGet);
             pGet = NULL;
         }
     }
-
+    pthread_exit(NULL);
 }
 
 int factoryStart(pFactory_t p) {

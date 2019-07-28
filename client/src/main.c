@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     close(exitFds[1]);
     int serverFd, epfd;
     epfd = epoll_create(1);
-    struct epoll_event evs[3];
+    struct epoll_event evs[2];
     Factory_t threadInfo;
     factoryInit(&serverFd, &threadInfo);
     factoryStart(&threadInfo);
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         printf("%s@Netdisk:$ ", username);
         CLOSE_COLOR
         fflush(stdout);
-        readyFdCcount = epoll_wait(epfd, evs, 3, -1);
+        readyFdCcount = epoll_wait(epfd, evs, 2, -1);
         for (i = 0; i < readyFdCcount; i++) {
             if (evs[i].data.fd == exitFds[0]) {
                 threadPoolExit(&threadInfo);
@@ -115,21 +115,12 @@ int main(int argc, char* argv[]) {
                     case EXIT_CMD:
                         close(serverFd);
                         threadPoolExit(&threadInfo);
-                        exit(0);
                         break;
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:
-                        /* if(checkConnect(serverFd)){
-                            while((ret=reConnect(&serverFd,username))==-1){
-                                if(ret==-2){
-                                    close(serverFd);
-                                    threadPoolExit(&threadInfo);    
-                                }
-                            }
-                        } */
                         pNew = (pNode_t)calloc(1, sizeof(Node_t));
-                        pNew->serverFd = serverFd;
+                        strcpy(pNew->username,username);
                         pNew->flag=PUTS_CMD;
                         strcpy(pNew->filePath,arg);
                         pthread_mutex_lock(&pq->mutex);
