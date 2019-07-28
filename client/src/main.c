@@ -115,6 +115,8 @@ int main(int argc, char* argv[]) {
                     case EXIT_CMD:
                         close(serverFd);
                         threadPoolExit(&threadInfo);
+                        exit(0);
+                        break;
                     case GETS_CMD:
                         break;
                     case PUTS_CMD:

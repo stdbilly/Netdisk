@@ -21,22 +21,23 @@ void *threadFunc(void *p) {
             if (checkConnect(pGet->serverFd)) {
                 while ((ret = reConnect(&pGet->serverFd, pGet->username)) == -1) {
                     if (ret == -2) {
-                        pthread_exit((void *)-1);
+                        threadPoolExit(pthreadInfo);
                     }
                 }
             }
             if (pGet->flag == PUTS_CMD) {
                 ret = puts_cmd(pGet->serverFd, pGet->filePath);
-                if (ret) {
+                /* if (ret) {
                     free(pGet);
                     pGet = NULL;
-                    pthread_exit((void *)-1);
-                }
+                    pthread_exit(NULL);
+                } */
             }
             free(pGet);
             pGet = NULL;
         }
     }
+
 }
 
 int factoryStart(pFactory_t p) {

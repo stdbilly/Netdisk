@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
     mkdir("netdisk", 0775);
     while (fork()) {
         signal(SIGUSR1, sigFunc);
+        signal(SIGINT,sigFunc);
         int status;
         wait(&status);
         if (WIFEXITED(status)) {

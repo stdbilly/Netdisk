@@ -34,7 +34,6 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     MYSQL_ROW row;
     int ret;
     DataStream_t data;
-    char file_md5[MD5_LEN];
     //接收md5
     ret=recvCycle(clientFd, &data, DATAHEAD_LEN);
     if (ret) {
@@ -45,9 +44,6 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
         return -1;
     }
     strcpy(pfile->file_md5, data.buf);
-#ifdef DEBUG
-    printf("file_md5=%s,data.buf=%s",pfile->file_md5,data.buf);
-#endif
 
     res = selectDB(db, "file", "file_md5", pfile->file_md5, 0);
     if (res) {  //文件已存在
@@ -72,9 +68,12 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
         return 0;
     }
 
+    data.flag = SUCCESS;
+    send(clientFd, &data, DATAHEAD_LEN, 0);
+    
     //接收文件
     char file_path[PATH_LEN] = "netdisk/";
-    strcat(file_path, file_md5);
+    strcat(file_path, pfile->file_md5);   
     int fd = open(file_path, O_CREAT | O_RDWR, 0666);
     if (fd == -1) {
         perror("open");
@@ -82,6 +81,7 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     }
 
     //接收文件大小
+    printf("开始接收文件\n");
     off_t fileSize, download = 0;
     recvCycle(clientFd, &data, DATAHEAD_LEN);
     if (ret) {

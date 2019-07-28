@@ -19,7 +19,7 @@ int putsFile(int serverFd, char* filePath) {
     DataStream_t data;
     int ret;
 
-    printf("上传中... %5.2f%%\r", 0.0);
+    printf("\n上传中... %5.2f%%\r", 0.0);
     fflush(stdout);
 
     //发送md5
@@ -29,17 +29,17 @@ int putsFile(int serverFd, char* filePath) {
         return -1;
     }
     strcpy(data.buf, file_md5);
-#ifdef DEBUG
-    printf("file_md5=%s,data.buf=%s",file_md5,data.buf);
-#endif
     data.dataLen = strlen(data.buf)+1;
     send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
     //服务器检查文件是否存在
     //接收flag
     recvCycle(serverFd, &data, DATAHEAD_LEN);
+    if(ret){
+        return -1;
+    }
     if (data.flag == FILE_EXIST) {
         recvCycle(serverFd, &data, DATAHEAD_LEN);
-        if (data.dataLen == SUCCESS) {
+        if (data.flag == SUCCESS) {
             printf("上传中... 100%%\n");
             printf("上传成功\n");
             return 0;
@@ -62,7 +62,7 @@ int putsFile(int serverFd, char* filePath) {
     ERROR_CHECK(ret, -1, "sendflie");
     //接收flag
     recvCycle(serverFd, &data, DATAHEAD_LEN);
-    if (ret == 0) {
+    if (ret) {
         return -1;
     }
     if (data.flag != SUCCESS) {
@@ -73,7 +73,7 @@ int putsFile(int serverFd, char* filePath) {
     printf("上传中... 100%%\n");
     //接收flag
     ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
-    if (ret == 0) {
+    if (ret) {
         return -1;
     }
     if(ret!=SUCCESS){
