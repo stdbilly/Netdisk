@@ -8,13 +8,13 @@
 int putsFile(int serverFd, char* filePath) {
     int fd = open(filePath, O_RDWR);
     if (fd == -1) {
-        printf("文件不存在\n");
+        printf("No such file or directory\n");
         return -1;
     }
     DataStream_t data;
     int ret;
 
-    printf("\n上传中... %5.2f%%\r", 0.0);
+    printf("\nuploading... %5.2f%%\r", 0.0);
     fflush(stdout);
 
     //发送md5
@@ -35,11 +35,11 @@ int putsFile(int serverFd, char* filePath) {
     if (data.flag == FILE_EXIST) {
         recvCycle(serverFd, &data, DATAHEAD_LEN);
         if (data.flag == SUCCESS) {
-            printf("上传中... 100.00%%\n");
-            printf("上传成功\n");
+            printf("uploading... 100.00%%\n");
+            printf("upload success\n");
             return 0;
         } else {
-            printf("上传失败\n");
+            printf("upload fail\n");
             return -1;
         }
     } else {
@@ -61,11 +61,11 @@ int putsFile(int serverFd, char* filePath) {
         return -1;
     }
     if (data.flag != SUCCESS) {
-        printf("\n上传失败\n");
+        printf("\nupload fail\n");
         return -1;
         
     }
-    printf("上传中... 100.00%%\n");
+    printf("uploading... 100.00%%\n");
     //接收flag
     ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
     if (ret) {
@@ -75,7 +75,7 @@ int putsFile(int serverFd, char* filePath) {
         printf("\n服务器存入数据库失败\n");
         return -1;
     }
-    printf("\n上传成功\n");
+    printf("\nupload success\n");
     close(fd);
     return 0;
 }
@@ -127,14 +127,14 @@ int getsFile(int serverFd,char* filePath,int existFlag) {
         splice(fds[0], NULL, fd, begPoint, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
         if (download - lastDownload >= slice) {
-            printf("下载中... %5.2f%%\r", (float)download / fileSize * 100);
+            printf("downloading... %5.2f%%\r", (float)download / fileSize * 100);
             fflush(stdout);
             lastDownload = download;
         }
     }
     
     if (download == fileSize) {
-        printf("下载中... 100.00%%\n");
+        printf("downloading... 100.00%%\n");
         data.flag=SUCCESS;
         send(serverFd,&data,DATAHEAD_LEN,0);
     }else{
@@ -145,6 +145,7 @@ int getsFile(int serverFd,char* filePath,int existFlag) {
     gettimeofday(&end, NULL);
     printf("donload success, use time=%ld\n",
            (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+    fflush(stdout);
     close(fd);
     return 0;
 }

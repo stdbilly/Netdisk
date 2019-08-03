@@ -8,7 +8,7 @@ int loginWindow(int serverFd, pDataStream_t pData) {
     int option, ret;
 menu:
     system("clear");
-    printf("\n1.登录\n2.注册\n3.退出\n\n请输入对应的数字(1-3)\n");
+    printf("\n1.login\n2.register\n3.exit\n\nPlease input corresponding number(1-3)\n");
     scanf("%d", &option);
     switch (option) {
         case 1:
@@ -20,7 +20,7 @@ menu:
             system("clear");
             ret = userRegister(serverFd, pData);
             if (ret == 0) {
-                printf("输入任意键继续...");
+                printf("input any key to return...");
                 getchar();
                 getchar();
                 goto login;
@@ -29,20 +29,20 @@ menu:
         case 3:
             return -1;
         default:
-            printf("输入有误，请重新输入...\n");
-            printf("输入任意键返回...");
+            printf("input error, please retry...\n");
+            printf("input any key to return...");
             getchar();
             getchar();
             goto menu;
             break;
     }
     if (ret == -1) {
-        printf("输入任意键返回...");
+        printf("input any key to return...");
         getchar();
         getchar();
         goto menu;
     }
-    printf("登录成功...\n");
+    //printf("login success...\n");
     sleep(1);
     system("clear");
     printMenu();
@@ -58,7 +58,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
 
     // char tmp[20] = {0};
     bzero(pData, sizeof(DataStream_t));
-    printf("请输入用户名:");
+    printf("Username:");
     scanf("%s", name);
     strcpy(pData->buf, name);
 
@@ -95,7 +95,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
         send(serverFd, pData, pData->dataLen + DATAHEAD_LEN, 0);  //发送用户名
 
         char* password;
-        password = getpass("请输入密码:");
+        password = getpass("Password:");
 
         ret = sendRanStr(serverFd, pData);  //发送随机字符串
         if (ret == -1) {
@@ -143,7 +143,7 @@ int userRegister(int serverFd, pDataStream_t pData) {
     send(serverFd, pData, DATAHEAD_LEN, 0);  //发送flag
 
     while (pData->flag == REGISTER || pData->flag == USER_EXIST) {
-        printf("请输入用户名(不超过20个字符):");
+        printf("Username(less than 20 characters):");
         scanf("%s", name);
         strcpy(pData->buf, name);
         pData->dataLen = strlen(pData->buf);
@@ -156,13 +156,13 @@ int userRegister(int serverFd, pDataStream_t pData) {
 
         recvCycle(serverFd, pData, DATAHEAD_LEN);  //接收flag
         if (pData->flag == USER_EXIST) {
-            printf("用户名已存在，请重新输入\n");
+            printf("username already exist， please retry\n");
             sleep(3);
             system("clear");
         }
     }
 
-    passwd = getpass("请输入密码(不超过20个字符):");
+    passwd = getpass("Password(less than 20 characters):");
     ret = rsa_generate_key(name);  //生成用户的公钥和私钥
     if (ret) {
         return -1;
@@ -203,9 +203,9 @@ int userRegister(int serverFd, pDataStream_t pData) {
     recvCycle(serverFd, pData, DATAHEAD_LEN);
 
     if (pData->flag == SUCCESS) {
-        printf("注册成功，请登录\n");
+        printf("register success， please login\n");
     } else {
-        printf("注册失败\n");
+        printf("register fail\n");
         // delete key file
         char pk_path[100];
         sprintf(pk_path, "%s_rsa.key", name);
@@ -240,7 +240,7 @@ int ls_cmd(int serverFd, char* arg) {
     send(serverFd, &data, DATAHEAD_LEN, 0);
     recvCycle(serverFd, &data, DATAHEAD_LEN);
     if (data.dataLen == 0) {
-        printf("当前目录为空\n");
+        printf("empty directory\n");
         return 0;
     }
     n = data.dataLen;
@@ -264,7 +264,7 @@ int pwd_cmd(int serverFd) {
 
 int mkdir_cmd(int serverFd, char* arg) {
     if (!strlen(arg)) {
-        printf("请输入要创建的文件夹名字\n");
+        printf("Please input directory name\n");
         return -1;
     }
     DataStream_t data;
@@ -277,7 +277,7 @@ int mkdir_cmd(int serverFd, char* arg) {
     send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
     recvCycle(serverFd, &data, DATAHEAD_LEN);
     if (data.flag == SUCCESS) {
-        printf("文件夹创建成功\n");
+        printf("make directory success\n");
         return 0;
     } else {
         recvCycle(serverFd, data.buf, data.dataLen);
@@ -313,7 +313,7 @@ int cd_cmd(int serverFd, char* arg) {
 
 int rm_cmd(int serverFd, char* arg) {
     if (!strlen(arg)) {
-        printf("请输入要创建的文件夹名字\n");
+        printf("Please input directory name\n");
         return -1;
     }
     DataStream_t data;
@@ -330,7 +330,7 @@ int rm_cmd(int serverFd, char* arg) {
     printf("data.flag=%d\n", data.flag);
 #endif
     if (data.flag == SUCCESS) {
-        printf("文件或文件夹删除成功\n");
+        printf("remove files or directories success\n");
         return 0;
     } else {
         recvCycle(serverFd, data.buf, data.dataLen);
@@ -340,15 +340,12 @@ int rm_cmd(int serverFd, char* arg) {
 }
 
 int puts_cmd(int serverFd, char* arg) {
-    if (!strlen(arg)) {
-        printf("请输入文件名\n");
-        return -1;
-    }
+
     int ret;
     //检查本地是否有此文件
     struct stat buf;
     if (stat(arg, &buf)) {
-        printf("文件不存在\n");
+        printf("No such file or directory\n");
         return -1;
     }
 
@@ -393,7 +390,7 @@ int puts_cmd(int serverFd, char* arg) {
     getcwd(cur_path, sizeof(cur_path)); */
 
     if (S_ISDIR(buf.st_mode)) {
-        printf("暂时不支持上传文件夹～\n");
+        printf("uploading directory not supported yet～\n");
         return -1;
     }
     /* if (chdir(file_dir)) {
@@ -411,10 +408,7 @@ int puts_cmd(int serverFd, char* arg) {
 }
 
 int gets_cmd(int serverFd, char* arg, char* username) {
-    if (!strlen(arg)) {
-        printf("请输入文件名\n");
-        return -1;
-    }
+    
     int ret,existFlag=0;
     //检查本地是否有此文件
     char file_name[FILENAME_LEN];
@@ -452,7 +446,7 @@ int gets_cmd(int serverFd, char* arg, char* username) {
     //是否是文件夹
     recvCycle(serverFd, &data, DATAHEAD_LEN);
     if (data.dataLen==0) {
-        printf("暂时不支持下载文件夹～\n");
+        printf("downloading directory not supported yet～\n");
         return -1;
     }
 
@@ -566,22 +560,22 @@ int checkConnect(int serverFd) {
         // printf("已连接\n");
         return 0;
     } else {
-        printf("与服务器断开连接\n");
+        printf("disconnect from server\n");
         return -1;
     }
 }
 
 void printMenu() {
-    printf("请输入以下命令:\n\n");
-    printf("ls:             列出文件\n");
-    printf("cd <path>:      改变工作路径\n");
-    printf("pwd:            显示当前工作路径\n");
-    printf("rm <file>:      删除文件\n");
-    printf("mkdir <dir>:    创建文件夹\n");
-    printf("puts <file>:    上传文件\n");
-    printf("gets <file>:    下载文件\n");
-    printf("help:           显示菜单\n");
-    printf("exit:           退出\n\n");
+    printf("Please input flowing commands:\n\n");
+    printf("ls:             list directory contents\n");
+    printf("cd <path>:      change directory\n");
+    printf("pwd:            print name of current/working directory\n");
+    printf("rm <file>:      remove files or directories\n");
+    printf("mkdir <dir>:    make directories\n");
+    printf("puts <file>:    upload file\n");
+    printf("gets <file>:    download file\n");
+    printf("help:           show menu\n");
+    printf("exit:           exit Netdisk\n\n");
 }
 
 /* char *genRandomStr(char *str, int len) {

@@ -161,7 +161,7 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
 
     if (ret == -1) {
         pData->flag = FAIL;
-        printf("插入user失败\n");
+        printf("insert user fail\n");
         send(clientFd, pData, DATAHEAD_LEN, 0);
         return -1;
     }
@@ -307,6 +307,7 @@ int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     } else {
+        bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "/");
         pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
@@ -332,8 +333,9 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
         convert_path(db, pData->buf, pustat->rootDirId, pustat->curDirId);
     if (abs_path == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "创建失败，路径不合法");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -359,8 +361,9 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
     } else {
         mysql_free_result(res);
         pData->flag = FAIL;
-        strcpy(pData->buf, "创建失败，文件已存在");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "file already exist");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -383,8 +386,9 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 #endif
     if (abs_path == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不合法");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -393,8 +397,9 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     abs_path = NULL;
     if (res == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不存在");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -410,8 +415,9 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         return 0;
     } else {  // is file
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不合法");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -430,8 +436,9 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     abs_path = convert_path(db, cmd_path, pustat->rootDirId, pustat->curDirId);
     if (abs_path == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不合法");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -443,8 +450,9 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     res = selectDB(db, "file", "file_path", regexp, 1);
     if (res == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不存在");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -492,8 +500,9 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
 
     if (ret == -1) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "文件或文件夹删除失败，请重试");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "remove files or directories fail, please retry");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     } else {
@@ -523,8 +532,9 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     abs_path = convert_path(db, file_name, pustat->rootDirId, pustat->curDirId);
     if (abs_path == NULL) {
         pData->flag = FAIL;
-        strcpy(pData->buf, "路径不合法");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "No such file or directory");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -534,8 +544,9 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     abs_path = NULL;
     if (res) {
         pData->flag = FILE_EXIST;
-        strcpy(pData->buf, "文件已存在");
-        pData->dataLen = strlen(pData->buf);
+        bzero(pData->buf, sizeof(pData->buf));
+        strcpy(pData->buf, "file already exist");
+        pData->dataLen = strlen(pData->buf)+1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
