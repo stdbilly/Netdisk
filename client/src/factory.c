@@ -19,15 +19,15 @@ void *threadFunc(void *p) {
         pthread_cleanup_pop(1);
         if (!getTaskSuccess) {
             int socketFd;
-                ret=reConnect(&socketFd,pGet->username);
-                if(ret){
-                    break;
-                }
+            ret = reConnect(&socketFd, pGet->username);
+            if (ret) {
+                break;
+            }
             if (pGet->flag == PUTS_CMD) {
                 puts_cmd(socketFd, pGet->filePath);
                 close(socketFd);
-            }else if(pGet->flag==GETS_CMD){
-                gets_cmd(socketFd,pGet->filePath,pGet->username);
+            } else if (pGet->flag == GETS_CMD) {
+                gets_cmd(socketFd, pGet->filePath, pGet->username);
                 close(socketFd);
             }
             free(pGet);

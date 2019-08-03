@@ -30,7 +30,7 @@ char* findRootDir(MYSQL* db, const char* user_name) {
     MYSQL_ROW row;
     char path[PATH_LEN] = "/home/";
     strcat(path, user_name);
-    res = selectDB(db, "file", "file_path", path,0);
+    res = selectDB(db, "file", "file_path", path, 0);
     char* root_dir;
     row = mysql_fetch_row(res);
     mysql_free_result(res);
@@ -45,7 +45,7 @@ char* findRootDir(MYSQL* db, const char* user_name) {
 int userVerify(MYSQL* db, const char* user_name, const char* password) {
     MYSQL_RES* res;
     MYSQL_ROW row;
-    res = selectDB(db, "user", "name", user_name,0);
+    res = selectDB(db, "user", "name", user_name, 0);
     if (res == NULL) {
 #ifdef DEBUG
         printf("cannot find user %s\n", user_name);
@@ -114,7 +114,7 @@ int insertFile(MYSQL* db, char* user_name, pFileStat_t pfile) {
     MYSQL_ROW row;
     char file_path[PATH_LEN];
 
-    res = selectDB(db, "file", "id", pfile->dir_id,0);
+    res = selectDB(db, "file", "id", pfile->dir_id, 0);
     if (res == NULL) {
         return -1;
     }
@@ -144,7 +144,7 @@ int insertFile(MYSQL* db, char* user_name, pFileStat_t pfile) {
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
 
     // insert into table user_file
-    res = selectDB(db, "user", "name", user_name,0);
+    res = selectDB(db, "user", "name", user_name, 0);
     if (res == NULL) {
         return -1;
     }
@@ -152,7 +152,7 @@ int insertFile(MYSQL* db, char* user_name, pFileStat_t pfile) {
     mysql_free_result(res);
     char user_id[12];
     strcpy(user_id, row[0]);
-    res = selectDB(db, "file", "file_path", file_path,0);
+    res = selectDB(db, "file", "file_path", file_path, 0);
     row = mysql_fetch_row(res);
     mysql_free_result(res);
     strcpy(pfile->id, row[1]);
@@ -202,15 +202,17 @@ int insertUserFile(MYSQL* db, char* user_id, char* file_id) {
 }
 
 MYSQL_RES* selectDB(MYSQL* db, const char* table, const char* field,
-                    const char* condition,int reg_flag) {
+                    const char* condition, int reg_flag) {
     MYSQL_RES* res = NULL;
     char query[QUERY_LEN] = {0};
-    if(reg_flag==1){
-        sprintf(query, "SELECT * FROM %s WHERE %s REGEXP '%s'", table, field, condition);
-    }else{
-        sprintf(query, "SELECT * FROM %s WHERE %s = '%s'", table, field, condition);
+    if (reg_flag == 1) {
+        sprintf(query, "SELECT * FROM %s WHERE %s REGEXP '%s'", table, field,
+                condition);
+    } else {
+        sprintf(query, "SELECT * FROM %s WHERE %s = '%s'", table, field,
+                condition);
     }
-    
+
 #ifdef DEBUG
     printf("selectDB:%s\n", query);
 #endif
@@ -325,81 +327,23 @@ int deleteFile(MYSQL* db, const char* user_name, const char* file_path) {
     return 0;
 }
 
-int updateCurDirId(MYSQL* db, char* user_name,char* curDirId){
+int updateCurDirId(MYSQL* db, char* user_name, char* curDirId) {
     int ret;
-    char query[QUERY_LEN]="update user set cur_dir_id=";
-    sprintf(query,"%s%s %s'%s'", query, curDirId, "where name=", user_name);
+    char query[QUERY_LEN] = "update user set cur_dir_id=";
+    sprintf(query, "%s%s %s'%s'", query, curDirId, "where name=", user_name);
     ret = mysql_query(db, query);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
     return 0;
 }
 
-/* int modifyDB(MYSQL* db, char* cmd) {
-    int ret;
-    ret = mysql_query(db, cmd);
+int insertUserOp(MYSQL* db, const char* user_name, char* cmd) {
+    char query[QUERY_LEN];
+    sprintf(query, "INSERT INTO user_log VALUES (default, '%s', '%s', default)",
+            user_name, cmd);
+#ifdef DEBUG
+    printf("sql: %s\n", query);
+#endif
+    int ret = mysql_query(db, query);
     MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("modify database success\n");
     return 0;
 }
-
-int queryDB(MYSQL* db, char* cmd) {
-    int ret, i, fieldsNum;
-    MYSQL_RES* res;
-    MYSQL_ROW row;
-    ret = mysql_query(db, cmd);
-    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("query ret=%d\n", ret);
-    res = mysql_use_result(db);
-    if (res) {
-        if ((row = mysql_fetch_row(res)) == NULL) {  //没有查询到数据
-            printf("empty set\n");
-            mysql_free_result(res);
-            return -1;
-        } else {  // mysql_fetch_row(res)已经取出了一行，如果有数据就要打印
-            fieldsNum = mysql_num_fields(res);
-            for (i = 0; i < fieldsNum; i++) {
-                printf("%8s ", row[i]);
-            }
-            printf("\n");
-        }
-        while ((row = mysql_fetch_row(res)) != NULL) {
-            for (i = 0; i < fieldsNum; i++) {
-                printf("%8s ", row[i]);
-            }
-            printf("\n");
-        }
-    } else {
-        printf("result is NULL\n");
-        mysql_free_result(res);
-        return -1;
-    }
-    mysql_free_result(res);
-    return 0;
-}
-
-int queryUser(MYSQL* db, char* cmd, pUser_t puser) {
-    int ret;
-    MYSQL_RES* res;
-    MYSQL_ROW row;
-    ret = mysql_query(db, cmd);
-    MYSQL_ERROR_CHECK(ret, "mysql_query", db);
-    printf("query ret=%d\n", ret);
-    res = mysql_use_result(db);
-    if (res) {
-        if ((row = mysql_fetch_row(res)) != NULL) {
-            strcpy(puser->name, row[1]);
-            strcpy(puser->password, row[3]);
-            printf("queryUser success\n");
-        } else {  //没有查询到数据
-            printf("empty set\n");
-            mysql_free_result(res);
-            return -1;
-        }
-    } else {
-        printf("result is NULL\n");
-        mysql_free_result(res);
-        return -1;
-    }
-    mysql_free_result(res);
-    return 0;
-} */

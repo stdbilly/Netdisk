@@ -37,16 +37,16 @@ void *threadFunc(void *p) {
 
                 switch (data.flag) {
                     case LOGIN:
-                        ret = userLogin(pGet->clientFd, db, &data,&ustat);
+                        ret = userLogin(pGet->clientFd, db, &data, &ustat);
                         break;
                     case REGISTER:
                         ret = userRegister(pGet->clientFd, db, &data);
                         break;
                     case LS_CMD:
-                        ls_cmd(pGet->clientFd,db,&data,&ustat);
+                        ls_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case CD_CMD:
-                        cd_cmd(pGet->clientFd,db,&data,&ustat);
+                        cd_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case PWD_CMD:
                         pwd_cmd(pGet->clientFd, db, &data, &ustat);
@@ -55,23 +55,23 @@ void *threadFunc(void *p) {
                         rm_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case GETS_CMD:
-                        ret=gets_cmd(pGet->clientFd,db,&data,&ustat);
-                        if(ret){
+                        ret = gets_cmd(pGet->clientFd, db, &data, &ustat);
+                        if (ret) {
                             goto DISCONNECT;
                         }
                         break;
                     case PUTS_CMD:
-                        ret=puts_cmd(pGet->clientFd,db,&data,&ustat);
-                        if(ret){
+                        ret = puts_cmd(pGet->clientFd, db, &data, &ustat);
+                        if (ret) {
                             goto DISCONNECT;
                         }
                         break;
                     case MKDIR_CMD:
-                        mkdir_cmd(pGet->clientFd,db,&data,&ustat);
+                        mkdir_cmd(pGet->clientFd, db, &data, &ustat);
                         break;
                     case RECONNECT:
-                        ret=reConnect(pGet->clientFd, db, &data, &ustat);
-                        if(ret){
+                        ret = reConnect(pGet->clientFd, db, &data, &ustat);
+                        if (ret) {
                             goto DISCONNECT;
                         }
                         break;

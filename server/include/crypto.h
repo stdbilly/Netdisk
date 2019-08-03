@@ -8,9 +8,9 @@
 #define SER_DE_LEN 373
 #define RESULT_LEN 1000
 
-char* rsa_encrypt(char* str,const char* user_name);
+char* rsa_encrypt(char* str, const char* user_name);
 char* rsa_sign(char* str);
 char* rsa_decrypt(char* str);
-char* rsa_verify(char* str,const char* user_name);
+char* rsa_verify(char* str, const char* user_name);
 
 #endif

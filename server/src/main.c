@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     mkdir("netdisk", 0775);
     while (fork()) {
         signal(SIGUSR1, sigFunc);
-        signal(SIGINT,sigFunc);
+        signal(SIGINT, sigFunc);
         int status;
         wait(&status);
         if (WIFEXITED(status)) {
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 
             if (evs[i].data.fd == socketFd) {
                 clientFd = accept(socketFd, NULL, NULL);
-                printf("client:%d connect\n",clientFd);
+                printf("client:%d connect\n", clientFd);
                 pNew = (pNode_t)calloc(1, sizeof(Node_t));
                 pNew->clientFd = clientFd;
                 pthread_mutex_lock(&pq->mutex);

@@ -1,6 +1,6 @@
 #include "../include/crypto.h"
 
-#define DEBUG
+//#define DEBUG
 
 int rsa_generate_key(const char* user_name) {
     int ret;

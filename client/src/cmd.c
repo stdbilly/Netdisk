@@ -8,7 +8,9 @@ int loginWindow(int serverFd, pDataStream_t pData) {
     int option, ret;
 menu:
     system("clear");
-    printf("\n1.login\n2.register\n3.exit\n\nPlease input corresponding number(1-3)\n");
+    printf(
+        "\n1.login\n2.register\n3.exit\n\nPlease input corresponding "
+        "number(1-3)\n");
     scanf("%d", &option);
     switch (option) {
         case 1:
@@ -42,7 +44,7 @@ menu:
         getchar();
         goto menu;
     }
-    //printf("login success...\n");
+    // printf("login success...\n");
     sleep(1);
     system("clear");
     printMenu();
@@ -126,7 +128,7 @@ int userLogin(int serverFd, pDataStream_t pData) {
         //接收返回信息
         recvCycle(serverFd, pData, DATAHEAD_LEN);
         if (pData->flag == SUCCESS) {
-            printf("login success\n");
+            printf("\n\nlogin success\n");
         } else {
             printf("login fail,plese retry\n");
             return -1;
@@ -203,7 +205,7 @@ int userRegister(int serverFd, pDataStream_t pData) {
     recvCycle(serverFd, pData, DATAHEAD_LEN);
 
     if (pData->flag == SUCCESS) {
-        printf("register success， please login\n");
+        printf("\nregister success， please login\n");
     } else {
         printf("register fail\n");
         // delete key file
@@ -340,7 +342,6 @@ int rm_cmd(int serverFd, char* arg) {
 }
 
 int puts_cmd(int serverFd, char* arg) {
-
     int ret;
     //检查本地是否有此文件
     struct stat buf;
@@ -408,12 +409,11 @@ int puts_cmd(int serverFd, char* arg) {
 }
 
 int gets_cmd(int serverFd, char* arg, char* username) {
-    
-    int ret,existFlag=0;
+    int ret, existFlag = 0;
     //检查本地是否有此文件
     char file_name[FILENAME_LEN];
     int i = strlen(arg);
-    while (i>=0 && arg[i] != '/') {
+    while (i >= 0 && arg[i] != '/') {
         i--;
     }
     i++;
@@ -428,7 +428,7 @@ int gets_cmd(int serverFd, char* arg, char* username) {
     sprintf(file_path, "downloads/%s/%s", username, file_name);
     if (access(file_path, F_OK) == 0) {
         printf("file with the same name already exists\n");
-        existFlag=1;
+        existFlag = 1;
     }
 
     //发送文件名，服务器检查文件是否存在
@@ -445,18 +445,18 @@ int gets_cmd(int serverFd, char* arg, char* username) {
     }
     //是否是文件夹
     recvCycle(serverFd, &data, DATAHEAD_LEN);
-    if (data.dataLen==0) {
+    if (data.dataLen == 0) {
         printf("downloading directory not supported yet～\n");
         return -1;
     }
 
-    mkdir("downloads",0775);
-    char temp[PATH_LEN]={0};
-    sprintf(temp,"%s/%s","downloads",username);
-    mkdir(temp,0775);
+    mkdir("downloads", 0775);
+    char temp[PATH_LEN] = {0};
+    sprintf(temp, "%s/%s", "downloads", username);
+    mkdir(temp, 0775);
     //接收文件
-    ret=getsFile(serverFd,file_path,existFlag);
-    if(ret){
+    ret = getsFile(serverFd, file_path, existFlag);
+    if (ret) {
         return -1;
     }
     return 0;
@@ -577,23 +577,3 @@ void printMenu() {
     printf("help:           show menu\n");
     printf("exit:           exit Netdisk\n\n");
 }
-
-/* char *genRandomStr(char *str, int len) {
-    int i, flag;
-    srand(time(NULL));
-    for (i = 0; i < len; i++) {
-        flag = rand() % 3;
-        switch (flag) {
-            case 0:
-                str[i] = 'A' + rand() % 26;
-                break;
-            case 1:
-                str[i] = 'a' + rand() % 26;
-                break;
-            case 2:
-                str[i] = '0' + rand() % 10;
-                break;
-        }
-    }
-    return str;
-} */

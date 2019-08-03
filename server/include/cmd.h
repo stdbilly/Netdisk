@@ -44,7 +44,4 @@ int gets_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat);
 
 int reConnect(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat);
 
-// char *genRandomStr(char *str, int len);
-// int getUserInfo(char *buf, pUser_t puser);
-// void sendErrMsg(int clientFd, pDataStream_t pData);
 #endif

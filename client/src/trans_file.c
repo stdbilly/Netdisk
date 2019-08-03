@@ -3,7 +3,7 @@
 #include "../include/factory.h"
 #include "../include/md5.h"
 
-#define DEBUG
+//#define DEBUG
 
 int putsFile(int serverFd, char* filePath) {
     int fd = open(filePath, O_RDWR);
@@ -24,12 +24,12 @@ int putsFile(int serverFd, char* filePath) {
         return -1;
     }
     strcpy(data.buf, file_md5);
-    data.dataLen = strlen(data.buf)+1;
+    data.dataLen = strlen(data.buf) + 1;
     send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
     //服务器检查文件是否存在
     //接收flag
     recvCycle(serverFd, &data, DATAHEAD_LEN);
-    if(ret){
+    if (ret) {
         return -1;
     }
     if (data.flag == FILE_EXIST) {
@@ -63,15 +63,14 @@ int putsFile(int serverFd, char* filePath) {
     if (data.flag != SUCCESS) {
         printf("\nupload fail\n");
         return -1;
-        
     }
     printf("uploading... 100.00%%\n");
     //接收flag
-    ret=recvCycle(serverFd,&data,DATAHEAD_LEN);
+    ret = recvCycle(serverFd, &data, DATAHEAD_LEN);
     if (ret) {
         return -1;
     }
-    if(ret!=SUCCESS){
+    if (ret != SUCCESS) {
         printf("\n服务器存入数据库失败\n");
         return -1;
     }
@@ -80,7 +79,7 @@ int putsFile(int serverFd, char* filePath) {
     return 0;
 }
 
-int getsFile(int serverFd,char* filePath,int existFlag) {
+int getsFile(int serverFd, char* filePath, int existFlag) {
     int fd, ret;
     DataStream_t data;
     fd = open(filePath, O_RDWR | O_CREAT, 0666);
@@ -88,21 +87,21 @@ int getsFile(int serverFd,char* filePath,int existFlag) {
 
     off_t fileSize, download = 0, lastDownload = 0, slice;
     //告知服务器文件是否存在
-    __off64_t* begPoint=NULL;
-    if(existFlag){ //文件已存在
-        data.flag=FILE_EXIST;
+    __off64_t* begPoint = NULL;
+    if (existFlag) {  //文件已存在
+        data.flag = FILE_EXIST;
         //获取文件大小
         struct stat buf;
         fstat(fd, &buf);
-        begPoint=&buf.st_size;
-        download+=buf.st_size;
+        begPoint = &buf.st_size;
+        download += buf.st_size;
         data.dataLen = sizeof(buf.st_size);
         memcpy(data.buf, &buf.st_size, data.dataLen);
-        send(serverFd, &data, data.dataLen+DATAHEAD_LEN, 0);
-    }else{
-        data.flag=GETS_CMD;
+        send(serverFd, &data, data.dataLen + DATAHEAD_LEN, 0);
+    } else {
+        data.flag = GETS_CMD;
     }
-    send(serverFd,&data,DATAHEAD_LEN,0);
+    send(serverFd, &data, DATAHEAD_LEN, 0);
 
     //接收文件大小
     recvCycle(serverFd, &data, DATAHEAD_LEN);
@@ -127,23 +126,24 @@ int getsFile(int serverFd,char* filePath,int existFlag) {
         splice(fds[0], NULL, fd, begPoint, ret, SPLICE_F_MOVE | SPLICE_F_MORE);
         download += ret;
         if (download - lastDownload >= slice) {
-            printf("downloading... %5.2f%%\r", (float)download / fileSize * 100);
+            printf("downloading... %5.2f%%\r",
+                   (float)download / fileSize * 100);
             fflush(stdout);
             lastDownload = download;
         }
     }
-    
+
     if (download == fileSize) {
         printf("downloading... 100.00%%\n");
-        data.flag=SUCCESS;
-        send(serverFd,&data,DATAHEAD_LEN,0);
-    }else{
-        data.flag=FAIL;
-        send(serverFd,&data,DATAHEAD_LEN,0);
+        data.flag = SUCCESS;
+        send(serverFd, &data, DATAHEAD_LEN, 0);
+    } else {
+        data.flag = FAIL;
+        send(serverFd, &data, DATAHEAD_LEN, 0);
         return -1;
     }
     gettimeofday(&end, NULL);
-    printf("donload success, use time=%ld\n",
+    printf("download success, use time=%ld\n",
            (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
     fflush(stdout);
     close(fd);
@@ -152,16 +152,16 @@ int getsFile(int serverFd,char* filePath,int existFlag) {
 
 int sendRanStr(int sfd, pDataStream_t pData) {
     char RanStr[15];
-    int ret;
+    // int ret;
     srand((unsigned)(time(NULL)));
     sprintf(RanStr, "%d", rand());
     strcpy(pData->buf, RanStr);
     pData->dataLen = strlen(pData->buf) + 1;
-    ret = send(sfd, pData, pData->dataLen + DATAHEAD_LEN, 0);  // send RanStr
-#ifdef DEBUG
-    printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf), ret);
-#endif
-    recvCycle(sfd, pData, DATAHEAD_LEN);  // recv RanStr
+    send(sfd, pData, pData->dataLen + DATAHEAD_LEN, 0);  // send RanStr
+                                                         /* #ifdef DEBUG
+                                                             printf("bufLen=%ld,send ret=%d\n", strlen(pData->buf), ret);
+                                                         #endif */
+    recvCycle(sfd, pData, DATAHEAD_LEN);                 // recv RanStr
 
     recvCycle(sfd, pData->buf, pData->dataLen);
 

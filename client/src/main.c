@@ -47,14 +47,6 @@ int main(int argc, char* argv[]) {
             if (evs[i].data.fd == exitFds[0]) {
                 threadPoolExit(&threadInfo);
             }
-            /* if (evs[i].data.fd == serverFd) {
-                pNew = (pNode_t)calloc(1, sizeof(Node_t));
-                pNew->serverFd = serverFd;
-                pthread_mutex_lock(&pq->mutex);
-                queInsert(pq, pNew);
-                pthread_mutex_unlock(&pq->mutex);
-                pthread_cond_signal(&threadInfo.cond);
-            } */
 
             if (evs[i].data.fd == STDIN_FILENO) {
                 char arg[PATH_LEN] = {0};

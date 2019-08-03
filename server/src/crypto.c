@@ -1,16 +1,15 @@
 #include "crypto.h"
 #define DEBUG
 
-char* rsa_encrypt(char* str, const char* user_name)
-{
+char* rsa_encrypt(char* str, const char* user_name) {
     int ret;
-    char* en_str;;
+    char* en_str;
+    ;
 
     char pk_path[RESULT_LEN];
     sprintf(pk_path, "keys/%s_%s.key", user_name, "pub");
     FILE* fp = fopen(pk_path, "rb");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
 #ifdef DEBUG
         printf("user_pub.key not found\n");
 #endif
@@ -20,8 +19,7 @@ char* rsa_encrypt(char* str, const char* user_name)
     RSA* rsa;
 
     rsa = PEM_read_RSA_PUBKEY(fp, NULL, NULL, NULL);
-    if (rsa == NULL)
-    {
+    if (rsa == NULL) {
 #ifdef DEBUG
         printf("user_pub_key read failed\n");
 #endif
@@ -32,9 +30,9 @@ char* rsa_encrypt(char* str, const char* user_name)
 
     int len = strlen(str);
     en_str = (char*)calloc(RSA_EN_LEN, sizeof(char));
-    ret = RSA_public_encrypt(len, (unsigned char*)str, (unsigned char*)en_str, rsa, RSA_PKCS1_PADDING);
-    if (ret == -1)
-    {
+    ret = RSA_public_encrypt(len, (unsigned char*)str, (unsigned char*)en_str,
+                             rsa, RSA_PKCS1_PADDING);
+    if (ret == -1) {
         printf("rsa_encrypt failed\n");
         fclose(fp);
         RSA_free(rsa);
@@ -46,15 +44,14 @@ char* rsa_encrypt(char* str, const char* user_name)
     return en_str;
 }
 
-char* rsa_sign(char* str)
-{
+char* rsa_sign(char* str) {
     int ret;
-    char* en_str;;
+    char* en_str;
+    ;
     FILE* fp;
 
     fp = fopen("server_rsa.key", "rb");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
 #ifdef DEBUG
         printf("server_rsa.key not found\n");
 #endif
@@ -63,8 +60,7 @@ char* rsa_sign(char* str)
 
     RSA* rsa;
     rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-    if (rsa == NULL)
-    {
+    if (rsa == NULL) {
 #ifdef DEBUG
         printf("rsa_private_key read failed\n");
 #endif
@@ -75,12 +71,12 @@ char* rsa_sign(char* str)
 
     int len = strlen(str);
     en_str = (char*)calloc(SER_EN_LEN, sizeof(char));
-    ret = RSA_private_encrypt(len, (unsigned char*)str, (unsigned char*)en_str, rsa, RSA_PKCS1_PADDING);
+    ret = RSA_private_encrypt(len, (unsigned char*)str, (unsigned char*)en_str,
+                              rsa, RSA_PKCS1_PADDING);
 #ifdef DEBUG
-        printf("en_strLen=%ld\n",strlen(en_str));
+    printf("en_strLen=%ld\n", strlen(en_str));
 #endif
-    if (ret == -1)
-    {
+    if (ret == -1) {
 #ifdef DEBUG
         printf("rsa sign failed\n");
 #endif
@@ -94,14 +90,12 @@ char* rsa_sign(char* str)
     return en_str;
 }
 
-char* rsa_decrypt(char* str)
-{
+char* rsa_decrypt(char* str) {
     int ret;
     char* de_str;
 
     FILE* fp = fopen("server_rsa.key", "rb");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
 #ifdef DEBUG
         printf("server_rsa.key not found\n");
 #endif
@@ -110,8 +104,7 @@ char* rsa_decrypt(char* str)
 
     RSA* rsa;
     rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-    if (rsa == NULL)
-    {
+    if (rsa == NULL) {
 #ifdef DEBUG
         printf("rsa_private_key read failed\n");
 #endif
@@ -120,9 +113,9 @@ char* rsa_decrypt(char* str)
         return NULL;
     }
     de_str = (char*)calloc(SER_DE_LEN, sizeof(char));
-    ret = RSA_private_decrypt(SER_EN_LEN, (unsigned char*)str, (unsigned char*)de_str, rsa, RSA_PKCS1_PADDING);
-    if (ret == -1)
-    {
+    ret = RSA_private_decrypt(SER_EN_LEN, (unsigned char*)str,
+                              (unsigned char*)de_str, rsa, RSA_PKCS1_PADDING);
+    if (ret == -1) {
 #ifdef DEBUG
         ERR_print_errors_fp(stdout);
         printf("rsa_decrypt failed\n");
@@ -137,16 +130,14 @@ char* rsa_decrypt(char* str)
     return de_str;
 }
 
-char* rsa_verify(char* str, const char* user_name)
-{
+char* rsa_verify(char* str, const char* user_name) {
     int ret;
     char* de_str;
 
     char pk_path[RESULT_LEN];
     sprintf(pk_path, "keys/%s_pub.key", user_name);
     FILE* fp = fopen(pk_path, "rb");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
 #ifdef DEBUG
         printf("user pub key not found\n");
 #endif
@@ -155,8 +146,7 @@ char* rsa_verify(char* str, const char* user_name)
 
     RSA* rsa;
     rsa = PEM_read_RSA_PUBKEY(fp, NULL, NULL, NULL);
-    if (rsa == NULL)
-    {
+    if (rsa == NULL) {
 #ifdef DEBUG
         printf("user pub key read failed\n");
 #endif
@@ -165,9 +155,9 @@ char* rsa_verify(char* str, const char* user_name)
         return NULL;
     }
     de_str = (char*)calloc(RSA_DE_LEN, sizeof(char));
-    ret = RSA_public_decrypt(RSA_EN_LEN, (unsigned char*)str, (unsigned char*)de_str, rsa, RSA_PKCS1_PADDING);
-    if (ret == -1)
-    {
+    ret = RSA_public_decrypt(RSA_EN_LEN, (unsigned char*)str,
+                             (unsigned char*)de_str, rsa, RSA_PKCS1_PADDING);
+    if (ret == -1) {
 #ifdef DEBUG
         ERR_print_errors_fp(stdout);
         printf("decryption failed\n");

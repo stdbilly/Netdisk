@@ -12,42 +12,42 @@ int send_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     } */
 
     off_t fileSize;
-    off_t* begPoint=NULL;
+    off_t* begPoint = NULL;
     //接收flag，客户端是否已存在文件
-    recvCycle(clientFd,&data,DATAHEAD_LEN);
-    if(data.flag==FILE_EXIST){
-        recvCycle(clientFd, &fileSize, data.dataLen);//接收客户端文件大小
-        begPoint=&fileSize;
+    recvCycle(clientFd, &data, DATAHEAD_LEN);
+    if (data.flag == FILE_EXIST) {
+        recvCycle(clientFd, &fileSize, data.dataLen);  //接收客户端文件大小
+        begPoint = &fileSize;
     }
 
-    char filePath[PATH_LEN]="netdisk/";
-    strcat(filePath,pfile->file_md5);
+    char filePath[PATH_LEN] = "netdisk/";
+    strcat(filePath, pfile->file_md5);
     int fd = open(filePath, O_RDWR);
-    ERROR_CHECK(fd,-1,"open");
+    ERROR_CHECK(fd, -1, "open");
 
     struct stat buf;
     fstat(fd, &buf);  //获取文件大小
     data.dataLen = sizeof(buf.st_size);
     memcpy(data.buf, &buf.st_size, data.dataLen);
-    send(clientFd, &data, data.dataLen+DATAHEAD_LEN, 0);  //发送文件大小
+    send(clientFd, &data, data.dataLen + DATAHEAD_LEN, 0);  //发送文件大小
     //发送文件内容
     ret = sendfile(clientFd, fd, begPoint, buf.st_size);
     printf("sendflie ret=%d\n", ret);
     ERROR_CHECK(ret, -1, "sendflie");
 
     //接收成功标志
-    bzero(&data,sizeof(DataStream_t));
-    recvCycle(clientFd,&data,DATAHEAD_LEN);
-    if(ret){
+    bzero(&data, sizeof(DataStream_t));
+    recvCycle(clientFd, &data, DATAHEAD_LEN);
+    if (ret) {
         close(clientFd);
         return -1;
     }
 #ifdef DEBUG
     printf("data.flag=%d\n", data.flag);
 #endif
-    if(data.flag==SUCCESS){
+    if (data.flag == SUCCESS) {
         printf("sendfile success\n");
-    }else{
+    } else {
         printf("sendfile fail\n");
         return -1;
     }
@@ -60,11 +60,11 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     int ret;
     DataStream_t data;
     //接收md5
-    ret=recvCycle(clientFd, &data, DATAHEAD_LEN);
+    ret = recvCycle(clientFd, &data, DATAHEAD_LEN);
     if (ret) {
         return -1;
     }
-    ret=recvCycle(clientFd, data.buf, data.dataLen);
+    ret = recvCycle(clientFd, data.buf, data.dataLen);
     if (ret) {
         return -1;
     }
@@ -95,10 +95,10 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
 
     data.flag = SUCCESS;
     send(clientFd, &data, DATAHEAD_LEN, 0);
-    
+
     //接收文件
     char file_path[PATH_LEN] = "netdisk/";
-    strcat(file_path, pfile->file_md5);   
+    strcat(file_path, pfile->file_md5);
     int fd = open(file_path, O_CREAT | O_RDWR, 0666);
     if (fd == -1) {
         perror("open");
@@ -132,10 +132,10 @@ int recv_file(int clientFd, MYSQL* db, pUserStat_t pustat, pFileStat_t pfile) {
     }
     if (download == fileSize) {
         data.flag = SUCCESS;
-        send(clientFd, &data, DATAHEAD_LEN,0);
+        send(clientFd, &data, DATAHEAD_LEN, 0);
     } else {
         data.flag = FAIL;
-        send(clientFd, &data, DATAHEAD_LEN,0);
+        send(clientFd, &data, DATAHEAD_LEN, 0);
         remove(file_path);
         return -1;
     }
@@ -246,7 +246,7 @@ int recvPubKey(int clientFd, char* username) {
             break;
         }
     }
-    
+
     printf("recvPubKey success\n");
     close(fd);
     return 0;

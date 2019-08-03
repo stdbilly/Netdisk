@@ -64,6 +64,9 @@ int userLogin(int clientFd, MYSQL *db, pDataStream_t pData,
         }
     }
     printf("user_verified\n");
+
+    //将用户操作存入数据库
+    insertUserOp(db, name, "login");
     pData->flag = SUCCESS;
     send(clientFd, pData, DATAHEAD_LEN, 0);  //发送flag
 
@@ -168,6 +171,10 @@ int userRegister(int clientFd, MYSQL *db, pDataStream_t pData) {
 #ifdef DEBUG
     printf("user created\n");
 #endif
+
+    //将用户操作存入数据库
+    insertUserOp(db, user.name, "register");
+
     pData->flag = SUCCESS;
     send(clientFd, pData, DATAHEAD_LEN, 0);
 
@@ -289,6 +296,9 @@ int ls_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     }
     mysql_free_result(res);
+
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, "ls");
     return 0;
 }
 
@@ -313,16 +323,25 @@ int pwd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
     }
     mysql_free_result(res);
+
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, "pwd");
     return 0;
 }
 
 int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
               pUserStat_t pustat) {
     int ret;
+    char cmd[1024];
     MYSQL_RES *res;
     char file_name[FILENAME_LEN];
 
     recvCycle(clientFd, pData->buf, pData->dataLen);
+
+    sprintf(cmd, "%s %s", "mkdir", pData->buf);
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, cmd);
+
 #ifdef DEBUG
     printf("filename:%s,filenameLen=%ld\n", pData->buf, strlen(pData->buf));
 #endif
@@ -335,7 +354,7 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -354,7 +373,7 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
         if (ret == -1) {
             return -1;
         }
-        // ret = resolve_ls(result, n, "", db, cur_dir_id, root_id);
+
         pData->flag = SUCCESS;
         send(clientFd, pData, DATAHEAD_LEN, 0);
         return 0;
@@ -363,7 +382,7 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "file already exist");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -372,13 +391,21 @@ int mkdir_cmd(int clientFd, MYSQL *db, pDataStream_t pData,
 int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     if (pData->dataLen == 0) {
         strcpy(pustat->curDirId, pustat->rootDirId);
+        //将用户操作存入数据库
+        insertUserOp(db, pustat->user.name, "cd");
         return 0;
     }
 
+    char cmd[1024];
     MYSQL_RES *res;
     MYSQL_ROW row;
     char *abs_path;
     recvCycle(clientFd, pData->buf, pData->dataLen);
+
+    sprintf(cmd, "%s %s", "cd", pData->buf);
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, cmd);
+
     abs_path =
         convert_path(db, pData->buf, pustat->rootDirId, pustat->curDirId);
 #ifdef DEBUG
@@ -388,7 +415,7 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -399,7 +426,7 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -417,7 +444,7 @@ int cd_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -430,15 +457,21 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     char *abs_path;
     char cmd_path[PATH_LEN] = {0};
     int i, n, ret, num;
+    char cmd[1024];
 
     recvCycle(clientFd, pData->buf, pData->dataLen);
+
+    sprintf(cmd, "%s %s", "rm", pData->buf);
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, cmd);
+
     strcpy(cmd_path, pData->buf);
     abs_path = convert_path(db, cmd_path, pustat->rootDirId, pustat->curDirId);
     if (abs_path == NULL) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -452,7 +485,7 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -502,7 +535,7 @@ int rm_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "remove files or directories fail, please retry");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     } else {
@@ -522,8 +555,14 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     char *abs_path;
     int ret;
     char file_name[FILENAME_LEN];
+    char cmd[1024];
 
     recvCycle(clientFd, pData->buf, pData->dataLen);  //接收文件名
+
+    sprintf(cmd, "%s %s", "puts", pData->buf);
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, cmd);
+
     strcpy(file_name, pData->buf);
 #ifdef DEBUG
     printf("file_name:%s\n", file_name);
@@ -534,7 +573,7 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FAIL;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "No such file or directory");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -546,7 +585,7 @@ int puts_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
         pData->flag = FILE_EXIST;
         bzero(pData->buf, sizeof(pData->buf));
         strcpy(pData->buf, "file already exist");
-        pData->dataLen = strlen(pData->buf)+1;
+        pData->dataLen = strlen(pData->buf) + 1;
         send(clientFd, pData, pData->dataLen + DATAHEAD_LEN, 0);
         return -1;
     }
@@ -567,8 +606,14 @@ int gets_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     char *abs_path;
     int ret;
     char file_path[PATH_LEN];
+    char cmd[1024];
 
     recvCycle(clientFd, pData->buf, pData->dataLen);  //接收文件名
+
+    sprintf(cmd, "%s %s", "gts", pData->buf);
+    //将用户操作存入数据库
+    insertUserOp(db, pustat->user.name, cmd);
+
     strcpy(file_path, pData->buf);
 #ifdef DEBUG
     printf("file_path:%s\n", file_path);
@@ -598,17 +643,17 @@ int gets_cmd(int clientFd, MYSQL *db, pDataStream_t pData, pUserStat_t pustat) {
     FileStat_t fileInfo;
 
     if (atoi(row[2]) == 0) {  // is dir
-        pData->dataLen=0;
+        pData->dataLen = 0;
         send(clientFd, pData, DATAHEAD_LEN, 0);
         /* strcpy(file_name, row[3]);
         strcpy(file_size, cur_dir_id);  // send cur_dir_id via file_size
         strcpy(file_md5, "0"); */
         return -1;
     } else {  // is file
-        pData->dataLen=1;
+        pData->dataLen = 1;
         send(clientFd, pData, DATAHEAD_LEN, 0);
-        fileInfo.type=1;
-        fileInfo.file_size=atol(row[4]);
+        fileInfo.type = 1;
+        fileInfo.file_size = atol(row[4]);
         strcpy(fileInfo.file_name, row[3]);
         strcpy(fileInfo.file_md5, row[6]);
     }
@@ -665,45 +710,3 @@ int reConnect(int clientFd, MYSQL *db, pDataStream_t pData,
     rootDirId = NULL;
     return 0;
 }
-
-/* void sendErrMsg(int clientFd, pDataStream_t pData) {
-    pData->flag = FAIL;
-    pData->dataLen = DATAHEAD_LEN + strlen(pData->buf);
-    send(clientFd, pData, pData->dataLen, 0);
-}
-
-int getUserInfo(char *buf, pUser_t puser) {
-    int i = 0;
-    while (*buf != '#') {
-        puser->name[i++] = *(buf++);
-    }
-    printf("name=%s\n", puser->name);
-    buf++;
-    i = 0;
-    while (*buf != '\0') {
-        puser->password[i++] = *(buf++);
-    }
-    printf("password=%s\n", puser->password);
-    return 0;
-}
-
-char *genRandomStr(char *str, int len) {
-    int i, flag;
-    srand(time(NULL));
-    for (i = 0; i < len - 1; i++) {
-        flag = rand() % 3;
-        switch (flag) {
-            case 0:
-                str[i] = 'A' + rand() % 26;
-                break;
-            case 1:
-                str[i] = 'a' + rand() % 26;
-                break;
-            case 2:
-                str[i] = '0' + rand() % 10;
-                break;
-        }
-    }
-
-    return str;
-} */
